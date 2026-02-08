@@ -1,0 +1,158 @@
+/* Import files first */
+@import './fonts.css';
+
+/* Then Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import theme and custom after Tailwind */
+@layer base {
+    :root {
+        /* Colors - Prussian Blue Palette */
+        --color-prussian-blue: #071429;
+        --color-prussian-blue-dark: rgba(7, 20, 41, 0.95);
+        --color-prussian-blue-light: rgba(7, 20, 41, 0.8);
+
+        /* Colors - Teal Palette */
+        --color-teal: #03b5aa;
+        --color-teal-hover: rgba(3, 181, 170, 0.9);
+        --color-teal-active: rgba(3, 181, 170, 0.7);
+
+        /* Colors - Plum Palette */
+        --color-plum: #7a306c;
+        --color-plum-hover: rgba(122, 48, 108, 0.9);
+        --color-plum-active: rgba(122, 48, 108, 0.7);
+
+        /* Colors - Gold Palette */
+        --color-gold: #f8d071;
+        --color-gold-dark: #e0b860;
+        --color-gold-light: rgba(248, 208, 113, 0.6);
+
+        /* Colors - Alabaster Grey Palette */
+        --color-alabaster: #ecebe8;
+        --color-alabaster-secondary: rgba(236, 235, 232, 0.8);
+        --color-alabaster-tertiary: rgba(236, 235, 232, 0.6);
+        --color-alabaster-muted: rgba(236, 235, 232, 0.4);
+
+        /* Typography */
+        --font-display: 'Playfair Display', serif;
+        --font-serif: 'Source Serif 4', serif;
+        --font-sans: 'Inter', system-ui, sans-serif;
+
+        /* Transitions */
+        --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+
+        /* Border Radius */
+        --radius-sm: 0.375rem;
+        --radius-md: 0.5rem;
+        --radius-lg: 0.75rem;
+        --radius-xl: 1rem;
+        --radius-2xl: 1.5rem;
+    }
+
+    /* Base body styles */
+    body {
+        font-family: var(--font-sans);
+        background-color: var(--color-prussian-blue);
+        color: var(--color-alabaster);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+@layer utilities {
+
+    /* Custom animations */
+    .animate-gradient-shift {
+        animation: gradientShift 8s ease-in-out infinite;
+    }
+
+    @keyframes gradientShift {
+
+        0%,
+        100% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+    }
+
+    .animate-shimmer {
+        animation: shimmer 2s linear infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    /* Scrollbar styling */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(236, 235, 232, 0.05);
+        border-radius: 4px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(3, 181, 170, 0.3);
+        border-radius: 4px;
+        transition: background 0.3s ease;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(3, 181, 170, 0.5);
+    }
+
+    /* Selection styling */
+    ::selection {
+        background: rgba(3, 181, 170, 0.3);
+        color: #ecebe8;
+    }
+
+    /* Glass morphism effect */
+    .glass {
+        background: rgba(7, 20, 41, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(236, 235, 232, 0.1);
+    }
+
+    /* Gradient text */
+    .gradient-text {
+        background: linear-gradient(135deg, #03b5aa 0%, #f8d071 50%, #7a306c 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+    }
+}
+
+/* Page transitions */
+.page-enter-active,
+.page-leave-active {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.page-enter-from {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.page-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
+}

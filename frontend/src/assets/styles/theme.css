@@ -1,0 +1,187 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Palette stricte - 5 couleurs uniquement */
+  --alabaster-grey: #ecebe8;
+  --prussian-blue: #071429;
+  --royal-plum: #7a306c;
+  --light-sea-green: #03b5aa;
+  --jasmine: #f8d071;
+  
+  /* Backgrounds - Prussian Blue */
+  --background: #071429;
+  --background-secondary: rgba(7, 20, 41, 0.8);
+  --background-card: rgba(7, 20, 41, 0.6);
+  --background-overlay: rgba(7, 20, 41, 0.95);
+  
+  /* Accent Colors */
+  --accent-primary: #03b5aa;
+  --accent-secondary: #7a306c;
+  --accent-gold: #f8d071;
+  --accent-hover: rgba(3, 181, 170, 0.9);
+  --accent-active: rgba(3, 181, 170, 0.7);
+  
+  /* Text Colors - Alabaster Grey */
+  --foreground: #ecebe8;
+  --text-primary: #ecebe8;
+  --text-secondary: rgba(236, 235, 232, 0.8);
+  --text-tertiary: rgba(236, 235, 232, 0.6);
+  --text-muted: rgba(236, 235, 232, 0.4);
+  
+  /* Status Colors - Utilisant la palette */
+  --status-error: #7a306c;
+  --status-success: #03b5aa;
+  --status-warning: #f8d071;
+  --status-info: #03b5aa;
+  
+  /* Borders & Dividers - Subtle avec alabaster */
+  --border: rgba(236, 235, 232, 0.1);
+  --border-light: rgba(236, 235, 232, 0.15);
+  
+  /* Input Styling */
+  --input: rgba(7, 20, 41, 0.6);
+  --input-background: rgba(7, 20, 41, 0.6);
+  --input-border: rgba(236, 235, 232, 0.1);
+  --input-focus: #03b5aa;
+  
+  /* Legacy Variable Mapping for Components */
+  --card: rgba(7, 20, 41, 0.6);
+  --card-foreground: rgba(236, 235, 232, 0.8);
+  --popover: rgba(7, 20, 41, 0.9);
+  --popover-foreground: rgba(236, 235, 232, 0.8);
+  --primary: #03b5aa;
+  --primary-foreground: #ecebe8;
+  --secondary: #7a306c;
+  --secondary-foreground: #ecebe8;
+  --muted: rgba(236, 235, 232, 0.1);
+  --muted-foreground: rgba(236, 235, 232, 0.6);
+  --accent: #03b5aa;
+  --accent-foreground: #071429;
+  --destructive: #7a306c;
+  --destructive-foreground: #ecebe8;
+  --ring: #03b5aa;
+  
+  /* Shadows - Elegant & Subtle */
+  --shadow-sm: 0 2px 8px rgba(7, 20, 41, 0.3);
+  --shadow-md: 0 4px 16px rgba(7, 20, 41, 0.4);
+  --shadow-lg: 0 8px 32px rgba(7, 20, 41, 0.5);
+  --shadow-glow: 0 0 20px rgba(3, 181, 170, 0.2);
+  
+  /* Radius - More Refined */
+  --radius: 0.5rem;
+  
+  /* Font Weights - Plus raffinés */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Fonts */
+  --font-display: 'Playfair Display', serif;
+  --font-serif: 'Source Serif 4', serif;
+  --font-sans: 'Inter', sans-serif;
+  
+  /* Charts */
+  --chart-1: #03b5aa;
+  --chart-2: #7a306c;
+  --chart-3: #f8d071;
+  --chart-4: rgba(3, 181, 170, 0.7);
+  --chart-5: rgba(122, 48, 108, 0.7);
+  
+  /* Sidebar */
+  --sidebar: rgba(7, 20, 41, 0.8);
+  --sidebar-foreground: rgba(236, 235, 232, 0.8);
+  --sidebar-primary: #03b5aa;
+  --sidebar-primary-foreground: #071429;
+  --sidebar-accent: rgba(3, 181, 170, 0.1);
+  --sidebar-accent-foreground: #03b5aa;
+  --sidebar-border: rgba(236, 235, 232, 0.1);
+  --sidebar-ring: #03b5aa;
+  
+  /* Switch */
+  --switch-background: rgba(236, 235, 232, 0.1);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: #071429;
+  color: #ecebe8;
+  font-family: var(--font-sans);
+}
+
+/**
+* Typography styles - Élégant & Raffiné avec plus de finesse
+*/
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+h2 {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+h3 {
+  font-family: var(--font-serif);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+h4 {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+p {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-normal);
+  letter-spacing: 0.005em;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+label {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+button {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+}
+
+input, textarea {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-normal);
+  letter-spacing: 0.005em;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
