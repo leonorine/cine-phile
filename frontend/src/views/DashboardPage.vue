@@ -269,11 +269,10 @@ const viewMovieDetails = (id: number, mediaType: 'movie' | 'tv') => {
                 class="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium"
                 :class="{
                   'bg-[#03b5aa] text-[#ecebe8]': item.status === 'watched',
-                  'bg-[#f8d071] text-[#071429]': item.status === 'watching',
                   'bg-[#7a306c] text-[#ecebe8]': item.status === 'to_watch',
                 }"
               >
-                {{ item.status === 'watched' ? 'Vu' : item.status === 'watching' ? 'En cours' : 'À voir' }}
+                {{ item.status === 'watched' ? 'Vu' : 'À voir' }}
               </div>
             </div>
           </div>

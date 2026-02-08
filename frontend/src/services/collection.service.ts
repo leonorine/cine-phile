@@ -32,6 +32,7 @@ export interface CollectionItem {
     rating: number | null
     notes: string | null
     is_favorite: boolean
+    added_at: string
     created_at: string
     updated_at: string
 }
@@ -82,6 +83,7 @@ function dbToFrontend(item: CollectionItemDB): CollectionItem {
         rating: item.rating,
         notes: null,
         is_favorite: false,
+        added_at: item.added_at,
         created_at: item.added_at,
         updated_at: item.updated_at,
     }

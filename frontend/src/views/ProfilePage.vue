@@ -4,9 +4,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Camera, Film, MessageCircle, Users, Settings, ArrowLeft, Edit2, Save, X, Loader2, Star } from 'lucide-vue-next'
 import * as profileService from '@/services/profile.service'
-import * as commentsService from '@/services/comments.service'
 import type { Comment } from '@/services/comments.service'
-import { getImageUrl, getMediaDetails } from '@/services/media.service'
+import { getImageUrl } from '@/services/media.service'
 
 const router = useRouter()
 const authStore = useAuthStore()

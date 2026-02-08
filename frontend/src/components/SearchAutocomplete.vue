@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search, Film, Tv, Loader2, X } from 'lucide-vue-next'
 import { searchMedia, getImageUrl } from '@/services/media.service'

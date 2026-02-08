@@ -57,11 +57,6 @@ const getCountByStatus = (status: CollectionStatus | 'all') => {
   return (authStore.collection || []).filter(item => item.status === status).length
 }
 
-const getCountByType = (type: 'all' | 'movie' | 'tv') => {
-  if (type === 'all') return authStore.collection?.length || 0
-  return (authStore.collection || []).filter(item => item.media_type === type).length
-}
-
 const getStatusColor = (status: CollectionStatus) => {
   switch (status) {
     case 'to_watch': return 'bg-[#7a306c]'
