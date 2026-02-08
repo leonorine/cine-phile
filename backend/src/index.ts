@@ -19,8 +19,35 @@ const PORT = process.env.PORT || 3000;
 // Middlewares
 // ============================================
 
-// CORS
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+// CORS - Configure for production
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    process.env.CORS_ORIGIN,
+    process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, etc)
+        if (!origin) return callback(null, true);
+
+        // Check if origin is allowed or if we allow all (*)
+        if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        // In production, be strict; in dev, be permissive
+        if (process.env.NODE_ENV !== 'production') {
+            return callback(null, true);
+        }
+
+        callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // Body parser
 app.use(express.json());
