@@ -2,11 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import * as authService from '@/services/auth.service'
 import * as collectionService from '@/services/collection.service'
-import * as friendsService from '@/services/friends.service'
+import * as followsService from '@/services/follows.service'
 import * as notificationsService from '@/services/notifications.service'
 import { getToken, removeToken } from '@/services/api'
 import type { CollectionItem, CollectionStatus } from '@/services/collection.service'
-import type { Friend } from '@/services/friends.service'
+import type { FollowUser } from '@/services/follows.service'
 import type { Notification } from '@/services/notifications.service'
 
 // User type matching API response
@@ -24,7 +24,8 @@ export const useAuthStore = defineStore('auth', () => {
     // State
     const currentUser = ref<User | null>(null)
     const collection = ref<CollectionItem[]>([])
-    const friends = ref<Friend[]>([])
+    const followers = ref<FollowUser[]>([])
+    const following = ref<FollowUser[]>([])
     const notifications = ref<Notification[]>([])
     const isLoading = ref(false)
     const isInitialized = ref(false)
@@ -131,7 +132,8 @@ export const useAuthStore = defineStore('auth', () => {
         } finally {
             currentUser.value = null
             collection.value = []
-            friends.value = []
+            followers.value = []
+            following.value = []
             notifications.value = []
         }
     }
@@ -221,16 +223,22 @@ export const useAuthStore = defineStore('auth', () => {
     // Friends actions
     const loadFriends = async () => {
         try {
-            friends.value = await friendsService.getFriends()
+            const [followersData, followingData] = await Promise.all([
+                followsService.getFollowers(),
+                followsService.getFollowing()
+            ])
+            followers.value = followersData
+            following.value = followingData
         } catch (err) {
-            console.error('Failed to load friends:', err)
+            console.error('Failed to load follows:', err)
         }
     }
 
-    const removeFriend = async (friendId: string): Promise<boolean> => {
+    const removeFriend = async (userId: string): Promise<boolean> => {
         try {
-            await friendsService.removeFriend(friendId)
-            friends.value = friends.value.filter(f => f.id !== friendId)
+            await followsService.unfollowUser(userId)
+            followers.value = followers.value.filter(f => f.id !== userId)
+            following.value = following.value.filter(f => f.id !== userId)
             return true
         } catch (err: any) {
             error.value = err.message
@@ -271,7 +279,8 @@ export const useAuthStore = defineStore('auth', () => {
         // State
         currentUser,
         collection,
-        friends,
+        followers,
+        following,
         notifications,
         isLoading,
         isInitialized,

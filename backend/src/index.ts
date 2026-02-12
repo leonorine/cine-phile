@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import mediaRoutes from './routes/media';
 import collectionRoutes from './routes/collection';
-import friendsRoutes from './routes/friends';
+import followsRoutes from './routes/follows';
 import notificationsRoutes from './routes/notifications';
 import commentsRoutes from './routes/comments';
 import usersRoutes from './routes/users';
@@ -95,7 +95,7 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api', mediaRoutes); // /api/search, /api/media/:type/:id, /api/search/trending
 app.use('/api/collection', collectionRoutes);
-app.use('/api/friends', friendsRoutes);
+app.use('/api/follows', followsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/comments', commentsRoutes);
 app.use('/api/users', usersRoutes);
