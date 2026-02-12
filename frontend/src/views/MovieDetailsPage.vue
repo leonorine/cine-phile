@@ -123,6 +123,12 @@ const updateStatus = async (status: 'to_watch' | 'watched') => {
 const setRating = async (rating: number) => {
   if (!collectionItem.value || isUpdatingRating.value) return
   
+  // Prevent duplicate API call if rating is already set to this value
+  if (userRating.value === rating) {
+    console.log('Rating already set to', rating, '- skipping API call')
+    return
+  }
+  
   isUpdatingRating.value = true
   try {
     // Convert 1-5 to 1-10 for storage
