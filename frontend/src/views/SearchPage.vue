@@ -37,6 +37,7 @@ watch(searchQuery, (newQuery) => {
       router.replace({ query: { q: newQuery } })
     } else {
       mediaStore.clearSearch()
+      mediaStore.loadTrending() // Reload trending when search is empty
       router.replace({ query: {} })
     }
   }, 400)
@@ -96,7 +97,7 @@ const loadMore = () => {
       </div>
 
       <!-- Results Header -->
-      <template v-else-if="(mediaStore.searchResults || []).length > 0">
+      <template v-else-if="searchQuery.trim() ? (mediaStore.searchResults || []).length > 0 : (mediaStore.trendingMedia || []).length > 0">
         <div class="flex items-center justify-between mb-6">
           <p class="text-[#ecebe8] opacity-60">
             <template v-if="searchQuery.trim()">
@@ -110,7 +111,7 @@ const loadMore = () => {
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           <div 
-            v-for="movie in mediaStore.searchResults" 
+            v-for="movie in (searchQuery.trim() ? mediaStore.searchResults : mediaStore.trendingMedia)" 
             :key="`${movie.media_type}-${movie.id}`"
             @click="viewMovieDetails(movie.id, movie.media_type)"
             class="relative group cursor-pointer"
@@ -141,8 +142,8 @@ const loadMore = () => {
           </div>
         </div>
 
-        <!-- Load More Button -->
-        <div v-if="mediaStore.hasMorePages" class="flex justify-center mt-8">
+        <!-- Load More Button (only for search results, not trending) -->
+        <div v-if="searchQuery.trim() && mediaStore.hasMorePages" class="flex justify-center mt-8">
           <button
             @click="loadMore"
             :disabled="mediaStore.isLoading"
