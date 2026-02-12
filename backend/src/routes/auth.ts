@@ -536,41 +536,20 @@ router.post('/upload-avatar', authMiddleware, async (req: Request, res: Response
             });
         }
 
-        const { file, fileName } = req.body;
+        const { file } = req.body;
 
-        // Decode base64
-        const base64Data = file.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Data, 'base64');
-
-        // Generate unique filename
-        const fileExt = fileName.split('.').pop() || 'jpg';
-        const uniqueFileName = `${userId}-${Date.now()}.${fileExt}`;
-        const filePath = `avatars/${uniqueFileName}`;
-
-        // Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await db.storage
-            .from('avatars')
-            .upload(filePath, buffer, {
-                contentType: `image/${fileExt}`,
-                upsert: true,
-            });
-
-        if (uploadError) {
-            console.error('Error uploading avatar:', uploadError);
-            return res.status(500).json({
+        // Validate that it's a base64 image
+        if (!file.startsWith('data:image/')) {
+            return res.status(400).json({
                 success: false,
                 error: {
-                    message: 'Erreur lors de l\'upload de l\'avatar',
+                    message: 'Format d\'image invalide',
                 },
             });
         }
 
-        // Get public URL
-        const { data: publicUrlData } = db.storage
-            .from('avatars')
-            .getPublicUrl(filePath);
-
-        const avatarUrl = publicUrlData.publicUrl;
+        // Store base64 directly in database (simpler than Supabase Storage)
+        const avatarUrl = file;
 
         // Update user profile with new avatar URL
         const { error: updateError } = await db
@@ -582,11 +561,11 @@ router.post('/upload-avatar', authMiddleware, async (req: Request, res: Response
             .eq('id', userId);
 
         if (updateError) {
-            console.error('Error updating avatar URL:', updateError);
+            console.error('Error updating user avatar:', updateError);
             return res.status(500).json({
                 success: false,
                 error: {
-                    message: 'Erreur lors de la mise à jour de l\'avatar',
+                    message: 'Erreur lors de la mise à jour du profil',
                 },
             });
         }
@@ -599,11 +578,16 @@ router.post('/upload-avatar', authMiddleware, async (req: Request, res: Response
         });
 
     } catch (error) {
-        console.error('Unexpected error in upload avatar:', error);
+        console.error('Upload avatar error:', error);
         res.status(500).json({
             success: false,
             error: {
-                message: 'Erreur serveur inattendue',
+                message: 'Erreur serveur',
+            },
+        });
+    }
+});
+message: 'Erreur serveur inattendue',
             },
         });
     }
