@@ -587,10 +587,5 @@ router.post('/upload-avatar', authMiddleware, async (req: Request, res: Response
         });
     }
 });
-message: 'Erreur serveur inattendue',
-            },
-        });
-    }
-});
 
 export default router;
