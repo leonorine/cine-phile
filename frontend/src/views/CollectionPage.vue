@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { Tv, Plus, Loader2, Filter, Film, Star } from 'lucide-vue-next'
+import { Tv, Plus, Loader2, Filter, Film, Star, Trash2 } from 'lucide-vue-next'
 import { getImageUrl } from '@/services/media.service'
 import type { CollectionStatus } from '@/services/collection.service'
 
@@ -83,6 +83,26 @@ const navigateTo = (routeName: string) => {
 
 const renderStars = (rating: number) => {
   return Math.round(rating / 2) // Convert 1-10 to 1-5
+}
+
+const isDeleting = ref<string | null>(null)
+
+const handleDelete = async (event: Event, itemId: string, itemTitle: string) => {
+  event.stopPropagation() // Prevent navigation to details
+  
+  if (!confirm(`Voulez-vous vraiment supprimer "${itemTitle}" de votre collection ?`)) {
+    return
+  }
+  
+  isDeleting.value = itemId
+  try {
+    await authStore.removeFromCollection(itemId)
+  } catch (error) {
+    console.error('Error deleting item:', error)
+    alert('Erreur lors de la suppression')
+  } finally {
+    isDeleting.value = null
+  }
 }
 </script>
 
@@ -190,8 +210,19 @@ const renderStars = (rating: number) => {
               {{ item.media_type === 'movie' ? 'Film' : 'Série' }}
             </div>
 
+            <!-- Delete Button -->
+            <button
+              @click="handleDelete($event, item.id, item.title)"
+              :disabled="isDeleting === item.id"
+              class="absolute bottom-2 right-2 p-2 rounded-full bg-red-500/80 hover:bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-all disabled:opacity-50 z-10"
+              title="Supprimer de la collection"
+            >
+              <Loader2 v-if="isDeleting === item.id" class="w-4 h-4 animate-spin" />
+              <Trash2 v-else class="w-4 h-4" />
+            </button>
+
             <!-- Info on Hover -->
-            <div class="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="absolute bottom-0 left-0 right-0 p-4 pb-12 opacity-0 group-hover:opacity-100 transition-opacity">
               <p class="text-[#ecebe8] font-medium text-sm mb-1 line-clamp-2">{{ item.title }}</p>
               <div v-if="item.rating" class="flex items-center gap-0.5">
                 <Star 
