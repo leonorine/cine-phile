@@ -60,3 +60,15 @@ export async function unlikeComment(id: string): Promise<{ likes_count: number }
     const response = await api.delete<ApiResponse<{ likes_count: number }>>(`/comments/${id}/like`)
     return response.data.data
 }
+
+// Get current user's comments
+export interface UserComment extends Comment {
+    media_id: string
+    media_type: 'film' | 'serie'
+    rating?: number
+}
+
+export async function getUserComments(): Promise<UserComment[]> {
+    const response = await api.get<ApiResponse<UserComment[]>>('/comments/user/me')
+    return response.data.data || []
+}

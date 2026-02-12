@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Camera, Film, MessageCircle, Users, Settings, ArrowLeft, Edit2, Save, X, Loader2, Star } from 'lucide-vue-next'
 import * as profileService from '@/services/profile.service'
-import type { Comment } from '@/services/comments.service'
+import { getUserComments, type UserComment } from '@/services/comments.service'
 import { getImageUrl } from '@/services/media.service'
 
 const router = useRouter()
@@ -24,7 +24,7 @@ const avatarInput = ref<HTMLInputElement | null>(null)
 const isUploadingAvatar = ref(false)
 
 // User comments/reviews (feed)
-const userComments = ref<(Comment & { media_title?: string; media_poster?: string })[]>([])
+const userComments = ref<(UserComment & { media_title?: string; media_poster?: string; rating?: number })[]>([])
 const isLoadingComments = ref(false)
 
 onMounted(async () => {
@@ -32,26 +32,24 @@ onMounted(async () => {
 })
 
 const loadUserComments = async () => {
-  // Note: We would need a route to get user's comments
-  // For now, load from collection items that have been rated
   isLoadingComments.value = true
   try {
-    // Get rated items from collection
-    const ratedItems = authStore.collection.filter(item => item.rating && item.rating > 0)
-    userComments.value = ratedItems.map(item => ({
-      id: item.id,
-      user_id: authStore.currentUser?.id || '',
-      pseudo: authStore.currentUser?.username || '',
-      avatar_url: authStore.currentUser?.avatar_url || null,
-      text: '', // Would need to fetch actual comments
-      image_urls: [],
-      likes_count: 0,
-      created_at: item.added_at,
-      updated_at: item.added_at,
-      media_title: item.title,
-      media_poster: item.poster_path,
-      rating: item.rating
-    })) as any
+    // Fetch real comments from API
+    const comments = await getUserComments()
+    
+    // Enrich comments with media info from collection
+    userComments.value = comments.map(comment => {
+      const collectionItem = authStore.collection.find(
+        item => String(item.media_id) === String(comment.media_id)
+      )
+      
+      return {
+        ...comment,
+        media_title: collectionItem?.title || 'Titre inconnu',
+        media_poster: collectionItem?.poster_path || undefined,
+        rating: collectionItem?.rating || undefined
+      }
+    })
   } catch (error) {
     console.error('Error loading comments:', error)
   } finally {
@@ -307,10 +305,10 @@ const renderStars = (rating: number) => {
           </div>
         </div>
         <div class="bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl p-6 text-center">
-          <div class="text-2xl text-[#ecebe8] font-bold">{{ authStore.friends?.length || 0 }}</div>
+          <div class="text-2xl text-[#ecebe8] font-bold">{{ authStore.following?.length || 0 }}</div>
           <div class="text-[#ecebe8] opacity-50 text-sm flex items-center justify-center gap-1 mt-1">
             <Users class="w-4 h-4" />
-            Amis
+            Abonnements
           </div>
         </div>
       </div>
