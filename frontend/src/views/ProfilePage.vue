@@ -60,7 +60,7 @@ const loadUserComments = async () => {
         created_at: comment?.created_at || item.added_at,
         updated_at: comment?.updated_at || item.updated_at,
         media_id: String(item.media_id),
-        media_type: item.media_type === 'movie' ? 'film' : 'serie',
+        media_type: (item.media_type === 'movie' ? 'film' : 'serie') as 'film' | 'serie',
         media_title: item.title,
         media_poster: item.poster_path || undefined,
         rating: item.rating
@@ -350,7 +350,8 @@ const renderStars = (rating: number) => {
           <div
             v-for="review in userComments"
             :key="review.id"
-            class="flex gap-4 p-4 bg-[#071429]/40 border border-[#ecebe8]/5 rounded-xl hover:border-[#ecebe8]/10 transition-colors"
+            @click="viewMediaDetails(review.media_id, review.media_type)"
+            class="flex gap-4 p-4 bg-[#071429]/40 border border-[#ecebe8]/5 rounded-xl hover:border-[#ecebe8]/10 transition-colors cursor-pointer"
           >
             <!-- Movie Poster -->
             <div class="w-16 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-[#071429]/60">
