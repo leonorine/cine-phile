@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useMediaStore } from '@/stores/media'
 import { Search, Film, X, Loader2 } from 'lucide-vue-next'
 import { getImageUrl } from '@/services/media.service'
+import ImageWithFallback from '@/components/ImageWithFallback.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -44,6 +45,7 @@ watch(searchQuery, (newQuery) => {
 const clearSearch = () => {
   searchQuery.value = ''
   mediaStore.clearSearch()
+  mediaStore.loadTrending() // Reload trending when clearing search
   router.replace({ query: {} })
 }
 
@@ -93,11 +95,16 @@ const loadMore = () => {
         <Loader2 class="w-8 h-8 text-[#03b5aa] animate-spin" />
       </div>
 
-      <!-- Search Results -->
+      <!-- Results Header -->
       <template v-else-if="(mediaStore.searchResults || []).length > 0">
         <div class="flex items-center justify-between mb-6">
           <p class="text-[#ecebe8] opacity-60">
-            {{ mediaStore.totalResults }} résultats pour "{{ mediaStore.searchQuery }}"
+            <template v-if="searchQuery.trim()">
+              {{ mediaStore.totalResults }} résultats pour "{{ mediaStore.searchQuery }}"
+            </template>
+            <template v-else>
+              <span class="text-xl font-medium opacity-100">Tendances du moment</span>
+            </template>
           </p>
         </div>
 

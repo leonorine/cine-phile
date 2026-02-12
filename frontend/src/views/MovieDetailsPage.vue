@@ -110,6 +110,13 @@ const addToCollection = async () => {
 
 const updateStatus = async (status: 'to_watch' | 'watched') => {
   if (!collectionItem.value) return
+  
+  // Prevent duplicate API call if status is already set
+  if (collectionItem.value.status === status) {
+    console.log('Status already set to', status, '- skipping API call')
+    return
+  }
+  
   await authStore.updateCollectionItem(collectionItem.value.id, { status })
 }
 
@@ -209,7 +216,7 @@ const formatDate = (dateStr: string) => {
     <!-- Content -->
     <template v-else-if="media">
       <!-- Hero Backdrop -->
-      <div class="relative h-[50vh] md:h-[60vh] overflow-hidden">
+      <div class="relative h-[40vh] md:h-[50vh] overflow-hidden">
         <img 
           :src="getImageUrl(media.backdrop_path, 'original')"
           :alt="media.title"
