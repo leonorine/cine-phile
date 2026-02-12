@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Camera, Film, MessageCircle, Users, Settings, ArrowLeft, Edit2, Save, X, Loader2, Star } from 'lucide-vue-next'
-import * as profileService from '@/services/profile.service'
+import { updateProfile, uploadAvatar } from '@/services/profile.service'
 import { getUserComments, type UserComment } from '@/services/comments.service'
 import { getImageUrl } from '@/services/media.service'
 
@@ -119,7 +119,7 @@ const saveProfile = async () => {
   editError.value = ''
 
   try {
-    const updatedUser = await profileService.updateProfile({
+    const updatedUser = await updateProfile({
       pseudo: editPseudo.value.trim(),
       bio: editBio.value.trim() || null
     })
@@ -164,7 +164,7 @@ const handleAvatarChange = async (event: Event) => {
   isUploadingAvatar.value = true
 
   try {
-    const avatarUrl = await profileService.uploadAvatar(file)
+    const avatarUrl = await uploadAvatar(file)
 
     // Update the store
     if (authStore.currentUser) {
