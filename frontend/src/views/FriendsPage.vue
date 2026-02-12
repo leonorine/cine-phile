@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { Users, Search, UserPlus, Loader2 } from 'lucide-vue-next'
 import { searchUsers } from '@/services/users.service'
+import { followUser, unfollowUser } from '@/services/follows.service'
 import type { FollowUser } from '@/services/follows.service'
 
 const authStore = useAuthStore()
@@ -39,8 +40,24 @@ const handleSearch = async () => {
   }
 }
 
-const removeFriend = async (friendId: string) => {
-  await authStore.removeFriend(friendId)
+const handleFollow = async (userId: string) => {
+  try {
+    await followUser(userId)
+    await authStore.loadFollowing()
+    // Remove from search results after following
+    searchResults.value = searchResults.value.filter(u => u.id !== userId)
+  } catch (error) {
+    console.error('Error following user:', error)
+  }
+}
+
+const handleUnfollow = async (userId: string) => {
+  try {
+    await unfollowUser(userId)
+    await authStore.loadFollowing()
+  } catch (error) {
+    console.error('Error unfollowing user:', error)
+  }
 }
 
 const getInitials = (name: string) => {
@@ -96,6 +113,7 @@ const getInitials = (name: string) => {
               </div>
             </div>
             <button
+              @click="handleFollow(user.id)"
               class="p-2 bg-[#03b5aa]/10 text-[#03b5aa] rounded-lg hover:bg-[#03b5aa]/20 transition-all"
             >
               <UserPlus class="w-5 h-5" />
@@ -127,7 +145,7 @@ const getInitials = (name: string) => {
             </div>
           </div>
           <button
-            @click="removeFriend(user.id)"
+            @click="handleUnfollow(user.id)"
             class="px-4 py-2 text-[#7a306c] text-sm hover:bg-[#7a306c]/10 rounded-lg transition-all"
           >
             Se désabonner

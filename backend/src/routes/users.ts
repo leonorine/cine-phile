@@ -35,6 +35,63 @@ const paginationSchema = z.object({
 });
 
 // ============================================
+// GET /api/users/search?q=query
+// ============================================
+router.get('/search', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const query = req.query.q as string;
+
+        if (!query || query.trim().length < 2) {
+            return res.status(400).json({
+                success: false,
+                error: {
+                    message: 'La recherche doit contenir au moins 2 caractères',
+                },
+            });
+        }
+
+        const searchTerm = query.trim().toLowerCase();
+
+        // Search users by username (case-insensitive)
+        const { data: users, error: searchError } = await db
+            .from('users')
+            .select('id, username, avatar_url')
+            .ilike('username', `%${searchTerm}%`)
+            .limit(10);
+
+        if (searchError) {
+            console.error('Error searching users:', searchError);
+            return res.status(500).json({
+                success: false,
+                error: {
+                    message: 'Erreur lors de la recherche',
+                },
+            });
+        }
+
+        // Format response
+        const formattedUsers = (users || []).map(user => ({
+            id: user.id,
+            pseudo: user.username,
+            avatar_url: user.avatar_url,
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: formattedUsers,
+        });
+    } catch (error) {
+        console.error('Unexpected error in search users:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                message: 'Erreur serveur inattendue',
+            },
+        });
+    }
+});
+
+// ============================================
 // GET /api/users/:user_id
 // ============================================
 router.get('/:user_id', async (req: Request, res: Response) => {
