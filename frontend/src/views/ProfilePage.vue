@@ -6,6 +6,7 @@ import { Camera, Film, MessageCircle, Users, Settings, ArrowLeft, Edit2, Save, X
 import { updateProfile, uploadAvatar } from '@/services/profile.service'
 import { getUserComments, type UserComment } from '@/services/comments.service'
 import { getImageUrl } from '@/services/media.service'
+import ImageCropModal from '@/components/ImageCropModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -22,6 +23,8 @@ const editError = ref('')
 // Avatar upload
 const avatarInput = ref<HTMLInputElement | null>(null)
 const isUploadingAvatar = ref(false)
+const showCropModal = ref(false)
+const selectedImageFile = ref<File | null>(null)
 
 // User comments/reviews (feed)
 const userComments = ref<(UserComment & { media_title?: string; media_poster?: string; rating?: number })[]>([])
@@ -161,9 +164,18 @@ const handleAvatarChange = async (event: Event) => {
     return
   }
 
+  // Show crop modal
+  selectedImageFile.value = file
+  showCropModal.value = true
+}
+
+const handleCroppedImage = async (blob: Blob) => {
+  showCropModal.value = false
   isUploadingAvatar.value = true
 
   try {
+    // Convert blob to File
+    const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' })
     const avatarUrl = await uploadAvatar(file)
 
     // Update the store
@@ -175,10 +187,20 @@ const handleAvatarChange = async (event: Event) => {
     alert('Erreur lors de l\'upload de l\'avatar')
   } finally {
     isUploadingAvatar.value = false
+    selectedImageFile.value = null
     // Reset input
     if (avatarInput.value) {
       avatarInput.value.value = ''
     }
+  }
+}
+
+const closeCropModal = () => {
+  showCropModal.value = false
+  selectedImageFile.value = null
+  // Reset input
+  if (avatarInput.value) {
+    avatarInput.value.value = ''
   }
 }
 
@@ -438,4 +460,12 @@ const renderStars = (rating: number) => {
       </div>
     </div>
   </div>
+
+  <!-- Image Crop Modal -->
+  <ImageCropModal
+    :show="showCropModal"
+    :image-file="selectedImageFile"
+    @close="closeCropModal"
+    @cropped="handleCroppedImage"
+  />
 </template>
