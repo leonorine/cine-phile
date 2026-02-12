@@ -43,7 +43,7 @@ const handleSearch = async () => {
 const handleFollow = async (userId: string) => {
   try {
     await followUser(userId)
-    await authStore.loadFollowing()
+    await authStore.loadFriends()
     // Remove from search results after following
     searchResults.value = searchResults.value.filter(u => u.id !== userId)
   } catch (error) {
@@ -54,7 +54,7 @@ const handleFollow = async (userId: string) => {
 const handleUnfollow = async (userId: string) => {
   try {
     await unfollowUser(userId)
-    await authStore.loadFollowing()
+    await authStore.loadFriends()
   } catch (error) {
     console.error('Error unfollowing user:', error)
   }

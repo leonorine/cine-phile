@@ -61,10 +61,13 @@ router.get('/search', authMiddleware, async (req: Request, res: Response) => {
 
         if (searchError) {
             console.error('Error searching users:', searchError);
+            console.error('Search term was:', searchTerm);
+            console.error('Full error details:', JSON.stringify(searchError, null, 2));
             return res.status(500).json({
                 success: false,
                 error: {
                     message: 'Erreur lors de la recherche',
+                    details: searchError.message,
                 },
             });
         }
