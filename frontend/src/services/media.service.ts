@@ -69,8 +69,8 @@ export async function searchMedia(
 }
 
 // Get trending movies and TV shows
-export async function getTrending(): Promise<SearchResponse> {
-    const response = await api.get<ApiResponse<SearchResponse>>('/search/trending')
+export async function getTrending(): Promise<MediaSearchResult[]> {
+    const response = await api.get<ApiResponse<MediaSearchResult[]>>('/search/trending')
     return response.data.data
 }
 

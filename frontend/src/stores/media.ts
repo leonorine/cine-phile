@@ -66,14 +66,15 @@ export const useMediaStore = defineStore('media', () => {
     }
 
     const loadTrending = async (): Promise<void> => {
-        if (trendingMedia.value.length > 0) return // Already loaded
+        if (trendingMedia.value?.length > 0) return // Already loaded
 
         isLoading.value = true
         error.value = null
 
         try {
             const response = await mediaService.getTrending()
-            trendingMedia.value = response.results
+            // Backend returns array directly, not { results: [...] }
+            trendingMedia.value = Array.isArray(response) ? response : []
         } catch (err: any) {
             error.value = err.message || 'Erreur lors du chargement des tendances'
             console.error('Trending error:', err)

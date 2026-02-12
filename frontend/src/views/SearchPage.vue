@@ -117,11 +117,10 @@ const loadMore = () => {
             class="relative group cursor-pointer"
           >
             <div class="aspect-[2/3] rounded-xl overflow-hidden bg-[#071429]/60 border border-[#ecebe8]/10">
-              <img 
+              <ImageWithFallback
                 :src="getImageUrl(movie.poster_path, 'w342')"
                 :alt="movie.title"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
               />
               <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               
