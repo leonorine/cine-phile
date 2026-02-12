@@ -91,6 +91,11 @@ const navigateTo = (routeName: string) => {
   router.push({ name: routeName })
 }
 
+const viewMediaDetails = (mediaId: string, mediaType: 'film' | 'serie') => {
+  const type = mediaType === 'film' ? 'movie' : 'tv'
+  router.push(`/movie/${type}/${mediaId}`)
+}
+
 // Edit profile
 const startEditing = () => {
   editPseudo.value = user.value?.username || ''
