@@ -365,7 +365,7 @@ const renderStars = (rating: number) => {
               </div>
 
               <!-- Comment text or rating info -->
-              <p v-if="review.text" class="text-[#ecebe8]/70 text-sm line-clamp-2">{{ review.text }}</p>
+              <p v-if="review.text && review.text.trim()" class="text-[#ecebe8]/70 text-sm line-clamp-2">{{ review.text }}</p>
               <p v-else class="text-[#ecebe8]/40 text-sm italic">Note sans commentaire</p>
               
               <!-- Date -->
