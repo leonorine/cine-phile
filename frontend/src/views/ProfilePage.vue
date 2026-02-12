@@ -37,19 +37,35 @@ const loadUserComments = async () => {
     // Fetch real comments from API
     const comments = await getUserComments()
     
-    // Enrich comments with media info from collection
-    userComments.value = comments.map(comment => {
-      const collectionItem = authStore.collection.find(
-        item => String(item.media_id) === String(comment.media_id)
-      )
+    // Get all rated items from collection
+    const ratedItems = authStore.collection.filter(item => item.rating && item.rating > 0)
+    
+    // Create a map of media_id -> comment
+    const commentsMap = new Map(
+      comments.map(c => [String(c.media_id), c])
+    )
+    
+    // Merge rated items with their comments (if they exist)
+    userComments.value = ratedItems.map(item => {
+      const comment = commentsMap.get(String(item.media_id))
       
       return {
-        ...comment,
-        media_title: collectionItem?.title || 'Titre inconnu',
-        media_poster: collectionItem?.poster_path || undefined,
-        rating: collectionItem?.rating || undefined
+        id: comment?.id || item.id,
+        user_id: authStore.currentUser?.id || '',
+        pseudo: authStore.currentUser?.username || '',
+        avatar_url: authStore.currentUser?.avatar_url || null,
+        text: comment?.text || '',
+        image_urls: comment?.image_urls || [],
+        likes_count: comment?.likes_count || 0,
+        created_at: comment?.created_at || item.added_at,
+        updated_at: comment?.updated_at || item.updated_at,
+        media_id: String(item.media_id),
+        media_type: item.media_type === 'movie' ? 'film' : 'serie',
+        media_title: item.title,
+        media_poster: item.poster_path || undefined,
+        rating: item.rating
       }
-    })
+    }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   } catch (error) {
     console.error('Error loading comments:', error)
   } finally {
