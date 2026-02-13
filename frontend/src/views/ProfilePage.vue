@@ -309,7 +309,8 @@ const renderStars = (rating: number) => {
                 </template>
               </template>
             </div>
-            <button 
+            <button
+              v-if="isOwnProfile"
               @click="triggerAvatarUpload"
               :disabled="isUploadingAvatar"
               class="absolute bottom-0 right-0 p-2 bg-[#03b5aa] rounded-full text-[#ecebe8] shadow-lg hover:bg-[#03b5aa]/80 transition-all disabled:opacity-50"
@@ -429,7 +430,7 @@ const renderStars = (rating: number) => {
       <div class="mb-8">
         <h2 class="text-xl text-[#ecebe8] font-medium mb-4 flex items-center gap-2">
           <Star class="w-5 h-5 text-[#f8d071]" />
-          Mes avis
+          {{ isOwnProfile ? 'Mes avis' : 'Avis' }}
         </h2>
 
         <div v-if="isLoadingComments" class="flex justify-center py-8">
