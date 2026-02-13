@@ -388,7 +388,7 @@ const renderStars = (rating: number) => {
             <p class="text-[#ecebe8] opacity-50 text-sm mb-2">{{ user.email }}</p>
             <p v-if="user.bio" class="text-[#ecebe8] opacity-70 text-sm mb-4 max-w-sm">{{ user.bio }}</p>
             <button
-              v-else
+              v-else-if="isOwnProfile"
               @click="startEditing"
               class="text-[#03b5aa] text-sm mb-4 hover:text-[#03b5aa]/80"
             >
