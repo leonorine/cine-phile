@@ -71,7 +71,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         image_urls,
         created_at,
         updated_at,
-        user:users!comments_user_id_fkey(id, pseudo, avatar_url)
+        user:users!comments_user_id_fkey(id, username, avatar_url)
       `)
             .single();
 
@@ -123,7 +123,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
         const formattedComment = {
             id: comment.id,
             user_id: comment.user_id,
-            pseudo: user?.pseudo || null,
+            pseudo: user?.username || null,
             avatar_url: user?.avatar_url || null,
             media_id: comment.media_id,
             media_type: comment.media_type,
@@ -180,7 +180,7 @@ router.get('/:media_id', optionalAuthMiddleware, async (req: Request, res: Respo
         image_urls,
         created_at,
         updated_at,
-        user:users!comments_user_id_fkey(id, pseudo, avatar_url)
+        user:users!comments_user_id_fkey(id, username, avatar_url)
       `)
             .eq('media_id', media_id)
             .order('created_at', { ascending: false });
@@ -217,7 +217,7 @@ router.get('/:media_id', optionalAuthMiddleware, async (req: Request, res: Respo
         const formattedComments = comments.map((c: any) => ({
             id: c.id,
             user_id: c.user_id,
-            pseudo: c.user?.pseudo || null,
+            pseudo: c.user?.username || null,
             avatar_url: c.user?.avatar_url || null,
             text: c.text,
             image_urls: c.image_urls,
@@ -328,7 +328,7 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
         image_urls,
         created_at,
         updated_at,
-        user:users!comments_user_id_fkey(id, pseudo, avatar_url)
+        user:users!comments_user_id_fkey(id, username, avatar_url)
       `)
             .single();
 
@@ -353,7 +353,7 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
         const formattedComment = {
             id: updatedComment.id,
             user_id: updatedComment.user_id,
-            pseudo: user?.pseudo || null,
+            pseudo: user?.username || null,
             avatar_url: user?.avatar_url || null,
             text: updatedComment.text,
             image_urls: updatedComment.image_urls,

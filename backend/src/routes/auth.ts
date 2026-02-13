@@ -47,8 +47,8 @@ router.post('/register', async (req: Request, res: Response) => {
         // Check if pseudo is already taken
         const { data: existingUser, error: checkError } = await db
             .from('users')
-            .select('pseudo')
-            .eq('pseudo', pseudo)
+            .select('username')
+            .eq('username', pseudo)
             .maybeSingle();
 
         if (checkError) {
@@ -225,7 +225,7 @@ router.post('/login', async (req: Request, res: Response) => {
         // Fetch user profile from database
         const { data: userProfile, error: profileError } = await db
             .from('users')
-            .select('pseudo')
+            .select('username')
             .eq('id', authData.user.id)
             .single();
 
@@ -245,7 +245,7 @@ router.post('/login', async (req: Request, res: Response) => {
             data: {
                 user_id: authData.user.id,
                 email: authData.user.email,
-                pseudo: userProfile.pseudo,
+                pseudo: userProfile.username,
                 token: authData.session.access_token,
             },
         });

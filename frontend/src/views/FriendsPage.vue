@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Users, Search, UserPlus, Loader2 } from 'lucide-vue-next'
 import { searchUsers } from '@/services/users.service'
@@ -64,10 +63,6 @@ const handleUnfollow = async (userId: string) => {
 const getInitials = (name: string) => {
   return name?.substring(0, 2).toUpperCase() || '??'
 }
-
-const viewProfile = (userId: string) => {
-  router.push(`/profile/${userId}`)
-}
 </script>
 
 <template>
@@ -106,12 +101,9 @@ const viewProfile = (userId: string) => {
           <div 
             v-for="user in searchResults" 
             :key="user.id"
-            class="p-4 bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl flex items-center justify-between hover:border-[#03b5aa]/40 transition-all"
+            class="p-4 bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl flex items-center justify-between"
           >
-            <div 
-              @click="viewProfile(user.id)"
-              class="flex items-center gap-4 flex-1 cursor-pointer"
-            >
+            <div class="flex items-center gap-4">
               <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#03b5aa] to-[#7a306c] flex items-center justify-center text-[#ecebe8] font-medium overflow-hidden">
                 <img v-if="user.avatar_url" :src="user.avatar_url" :alt="user.pseudo" class="w-full h-full object-cover" />
                 <template v-else>{{ getInitials(user.pseudo) }}</template>
@@ -143,10 +135,7 @@ const viewProfile = (userId: string) => {
           :key="user.id"
           class="p-4 bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl flex items-center justify-between hover:border-[#ecebe8]/20 transition-all"
         >
-          <div 
-            @click="viewProfile(user.id)"
-            class="flex items-center gap-4 flex-1 cursor-pointer"
-          >
+          <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#03b5aa] to-[#7a306c] flex items-center justify-center text-[#ecebe8] font-medium overflow-hidden">
               <img v-if="user.avatar_url" :src="user.avatar_url" :alt="user.pseudo" class="w-full h-full object-cover" />
               <template v-else>{{ getInitials(user.pseudo) }}</template>
