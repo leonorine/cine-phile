@@ -588,4 +588,101 @@ router.post('/upload-avatar', authMiddleware, async (req: Request, res: Response
     }
 });
 
+// ============================================
+// POST /api/auth/oauth/callback
+// Exchange Supabase OAuth token for backend JWT
+// ============================================
+router.post('/oauth/callback', async (req: Request, res: Response) => {
+    try {
+        const { access_token, user } = req.body;
+
+        if (!access_token || !user || !user.email) {
+            return res.status(400).json({
+                success: false,
+                error: { message: 'Données OAuth invalides' }
+            });
+        }
+
+        // Verify Supabase token
+        const { data: { user: supabaseUser }, error: verifyError } = await supabaseAuth.getUser(access_token);
+
+        if (verifyError || !supabaseUser) {
+            return res.status(401).json({
+                success: false,
+                error: { message: 'Token OAuth invalide' }
+            });
+        }
+
+        // Check if user exists in our database
+        const { data: existingUser } = await db
+            .from('users')
+            .select('*')
+            .eq('email', user.email)
+            .single();
+
+        let userId: string;
+        let username: string;
+
+        if (existingUser) {
+            // User exists, update last login
+            userId = existingUser.id;
+            username = existingUser.username;
+        } else {
+            // Create new user from OAuth data
+            const newUsername = user.user_metadata?.full_name || user.email.split('@')[0];
+
+            const { data: newUser, error: createError } = await db
+                .from('users')
+                .insert({
+                    email: user.email,
+                    username: newUsername,
+                    avatar_url: user.user_metadata?.avatar_url || null,
+                    password_hash: '' // OAuth users don't have password
+                })
+                .select()
+                .single();
+
+            if (createError || !newUser) {
+                console.error('Error creating OAuth user:', createError);
+                return res.status(500).json({
+                    success: false,
+                    error: { message: 'Erreur lors de la création du compte' }
+                });
+            }
+
+            userId = newUser.id;
+            username = newUser.username;
+        }
+
+        // Generate backend JWT
+        const jwt = require('jsonwebtoken');
+        const token = jwt.sign(
+            { id: userId, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        // Get full user profile
+        const { data: userProfile } = await db
+            .from('users')
+            .select('id, username, email, avatar_url, bio, created_at, updated_at')
+            .eq('id', userId)
+            .single();
+
+        res.status(200).json({
+            success: true,
+            data: {
+                token,
+                user: userProfile
+            }
+        });
+    } catch (error) {
+        console.error('OAuth callback error:', error);
+        res.status(500).json({
+            success: false,
+            error: { message: 'Erreur serveur' }
+        });
+    }
+});
+
 export default router;

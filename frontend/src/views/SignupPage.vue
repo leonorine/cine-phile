@@ -78,8 +78,23 @@ const handleSubmit = async (e: Event) => {
 }
 
 const handleGoogleSignup = async () => {
-  // TODO: Implement real Google OAuth
-  console.log('Google signup not implemented yet')
+  try {
+    const { supabase } = await import('../services/supabase')
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+    
+    if (oauthError) {
+      console.error('Google OAuth error:', oauthError)
+      errorMessage.value = 'Erreur lors de l\'inscription avec Google'
+    }
+  } catch (err) {
+    console.error('Google signup error:', err)
+    errorMessage.value = 'Erreur lors de l\'inscription avec Google'
+  }
 }
 
 const navigateTo = (routeName: string) => {

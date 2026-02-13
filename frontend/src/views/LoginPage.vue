@@ -41,10 +41,22 @@ const handleSubmit = async (e: Event) => {
 }
 
 const handleGoogleLogin = async () => {
-  // Mock Google login
-  const success = await authStore.login('cinephile@example.com', 'password')
-  if (success) {
-    router.push({ name: 'dashboard' })
+  try {
+    const { supabase } = await import('../services/supabase')
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+    
+    if (oauthError) {
+      console.error('Google OAuth error:', oauthError)
+      error.value = 'Erreur lors de la connexion avec Google'
+    }
+  } catch (err) {
+    console.error('Google login error:', err)
+    error.value = 'Erreur lors de la connexion avec Google'
   }
 }
 

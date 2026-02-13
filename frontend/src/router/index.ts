@@ -15,6 +15,7 @@ const ProfilePage = () => import('@/views/ProfilePage.vue')
 const FriendsPage = () => import('@/views/FriendsPage.vue')
 const NotificationsPage = () => import('@/views/NotificationsPage.vue')
 const SettingsPage = () => import('@/views/SettingsPage.vue')
+const OAuthCallback = () => import('@/views/OAuthCallback.vue')
 
 const routes: RouteRecordRaw[] = [
     {
@@ -39,6 +40,12 @@ const routes: RouteRecordRaw[] = [
         path: '/reset-password',
         name: 'reset-password',
         component: ResetPasswordPage,
+        meta: { requiresAuth: false }
+    },
+    {
+        path: '/auth/callback',
+        name: 'oauth-callback',
+        component: OAuthCallback,
         meta: { requiresAuth: false }
     },
     {
