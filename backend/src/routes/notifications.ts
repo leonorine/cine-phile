@@ -33,7 +33,7 @@ router.get('/', async (req: Request, res: Response) => {
         media_id,
         read,
         created_at,
-        actor:users!notifications_actor_id_fkey(id, pseudo, avatar_url)
+        actor:users!notifications_actor_id_fkey(id, username, avatar_url)
       `)
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
@@ -53,7 +53,7 @@ router.get('/', async (req: Request, res: Response) => {
             id: n.id,
             type: n.type,
             actor_id: n.actor_id,
-            actor_pseudo: n.actor?.pseudo || null,
+            actor_pseudo: n.actor?.username || null,
             actor_avatar: n.actor?.avatar_url || null,
             media_id: n.media_id,
             read: n.read,

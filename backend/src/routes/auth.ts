@@ -300,7 +300,7 @@ router.get('/user', authMiddleware, async (req: Request, res: Response) => {
             data: {
                 id: userProfile.id,
                 email: req.user!.email,
-                username: userProfile.pseudo,
+                username: userProfile.username,
                 avatar_url: userProfile.avatar_url,
                 bio: userProfile.bio,
                 created_at: userProfile.created_at,
@@ -441,7 +441,7 @@ router.put('/profile', authMiddleware, async (req: Request, res: Response) => {
             const { data: existingUser, error: checkError } = await db
                 .from('users')
                 .select('id')
-                .eq('pseudo', pseudo)
+                .eq('username', pseudo)
                 .neq('id', userId)
                 .maybeSingle();
 
@@ -470,7 +470,7 @@ router.put('/profile', authMiddleware, async (req: Request, res: Response) => {
             updated_at: new Date().toISOString(),
         };
 
-        if (pseudo !== undefined) updateData.pseudo = pseudo;
+        if (pseudo !== undefined) updateData.username = pseudo;
         if (bio !== undefined) updateData.bio = bio;
         if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
 
@@ -479,7 +479,7 @@ router.put('/profile', authMiddleware, async (req: Request, res: Response) => {
             .from('users')
             .update(updateData)
             .eq('id', userId)
-            .select('id, pseudo, avatar_url, bio, created_at, updated_at')
+            .select('id, username, avatar_url, bio, created_at, updated_at')
             .single();
 
         if (updateError) {
@@ -500,7 +500,7 @@ router.put('/profile', authMiddleware, async (req: Request, res: Response) => {
             data: {
                 id: updatedUser.id,
                 email: authUser?.user?.email || '',
-                username: updatedUser.pseudo,
+                username: updatedUser.username,
                 avatar_url: updatedUser.avatar_url,
                 bio: updatedUser.bio,
                 created_at: updatedUser.created_at,
