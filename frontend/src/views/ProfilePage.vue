@@ -153,7 +153,7 @@ const loadUserComments = async () => {
         media_type: (item.media_type === 'movie' ? 'film' : 'serie') as 'film' | 'serie',
         media_title: item.title,
         media_poster: item.poster_path || undefined,
-        rating: item.rating
+        rating: item.rating ?? undefined
       }
     }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   } catch (error) {

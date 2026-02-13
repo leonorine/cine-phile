@@ -20,7 +20,7 @@ const isLoadingRecommendations = ref(false)
 // Computed properties
 const currentUser = computed(() => authStore.currentUser)
 const trendingMovies = computed(() => (mediaStore.trendingMedia || []).slice(0, 6))
-const friends = computed(() => (authStore.friends || []).slice(0, 4))
+const friends = computed(() => (authStore.following || []).slice(0, 4))
 const collection = computed(() => (authStore.collection || []).slice(0, 4))
 
 onMounted(async () => {
@@ -308,14 +308,14 @@ const viewMovieDetails = (id: number, mediaType: 'movie' | 'tv') => {
                 <img 
                   v-if="friend.avatar_url" 
                   :src="friend.avatar_url" 
-                  :alt="friend.username"
+                  :alt="friend.pseudo"
                   class="w-full h-full object-cover" 
                 />
                 <template v-else>
-                  {{ friend.username?.substring(0, 2).toUpperCase() }}
+                  {{ friend.pseudo?.substring(0, 2).toUpperCase() }}
                 </template>
               </div>
-              <span class="text-[#ecebe8]">{{ friend.username }}</span>
+              <span class="text-[#ecebe8]">{{ friend.pseudo }}</span>
             </div>
           </div>
         </section>
