@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Users, Search, UserPlus, Loader2 } from 'lucide-vue-next'
 import { searchUsers } from '@/services/users.service'
 import { followUser, unfollowUser } from '@/services/follows.service'
 import type { FollowUser } from '@/services/follows.service'
 
+const router = useRouter()
 const authStore = useAuthStore()
 
 const searchQuery = ref('')
@@ -60,6 +62,10 @@ const handleUnfollow = async (userId: string) => {
   }
 }
 
+const viewUserProfile = (userId: string) => {
+  router.push({ name: 'profile', params: { id: userId } })
+}
+
 const getInitials = (name: string) => {
   return name?.substring(0, 2).toUpperCase() || '??'
 }
@@ -101,9 +107,9 @@ const getInitials = (name: string) => {
           <div 
             v-for="user in searchResults" 
             :key="user.id"
-            class="p-4 bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl flex items-center justify-between"
+            class="p-4 bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl flex items-center justify-between hover:border-[#03b5aa]/30 transition-all"
           >
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-4 flex-1 cursor-pointer" @click="viewUserProfile(user.id)">
               <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#03b5aa] to-[#7a306c] flex items-center justify-center text-[#ecebe8] font-medium overflow-hidden">
                 <img v-if="user.avatar_url" :src="user.avatar_url" :alt="user.pseudo" class="w-full h-full object-cover" />
                 <template v-else>{{ getInitials(user.pseudo) }}</template>
@@ -113,7 +119,7 @@ const getInitials = (name: string) => {
               </div>
             </div>
             <button
-              @click="handleFollow(user.id)"
+              @click.stop="handleFollow(user.id)"
               class="p-2 bg-[#03b5aa]/10 text-[#03b5aa] rounded-lg hover:bg-[#03b5aa]/20 transition-all"
             >
               <UserPlus class="w-5 h-5" />

@@ -72,3 +72,8 @@ export async function getUserComments(): Promise<UserComment[]> {
     const response = await api.get<ApiResponse<UserComment[]>>('/comments/user/me')
     return response.data.data || []
 }
+
+export async function getUserCommentsByUserId(userId: string): Promise<UserComment[]> {
+    const response = await api.get<ApiResponse<UserComment[]>>(`/comments/user/${userId}`)
+    return response.data.data || []
+}

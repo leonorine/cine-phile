@@ -1,16 +1,62 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Camera, Film, MessageCircle, Users, Settings, ArrowLeft, Edit2, Save, X, Loader2, Star } from 'lucide-vue-next'
 import { updateProfile, uploadAvatar } from '@/services/profile.service'
-import { getUserComments, type UserComment } from '@/services/comments.service'
+import { getUserComments, getUserCommentsByUserId, type UserComment } from '@/services/comments.service'
 import { getImageUrl } from '@/services/media.service'
+import { getUserById, type UserProfile } from '@/services/users.service'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
-const user = computed(() => authStore.currentUser)
+// Profile data
+const profileData = ref<UserProfile | null>(null)
+const isLoadingProfile = ref(false)
+
+// Computed: is this the current user's own profile?
+const isOwnProfile = computed(() => {
+  const userId = route.params.id as string | undefined
+  return !userId || userId === authStore.currentUser?.id
+})
+
+// Computed: user to display (either fetched profile or current user)
+const user = computed(() => {
+  if (isOwnProfile.value) {
+    return authStore.currentUser
+  }
+  return profileData.value ? {
+    id: profileData.value.id,
+    username: profileData.value.pseudo,
+    email: '', // Not available for other users
+    avatar_url: profileData.value.avatar_url,
+    bio: profileData.value.bio,
+    created_at: profileData.value.created_at,
+    updated_at: profileData.value.created_at
+  } : null
+})
+
+// Computed: stats
+const stats = computed(() => {
+  if (isOwnProfile.value) {
+    return {
+      collection_count: authStore.collection.length,
+      comment_count: userComments.value.length,
+      friend_count: authStore.following.length
+    }
+  }
+  return profileData.value ? {
+    collection_count: profileData.value.collection_count,
+    comment_count: profileData.value.comment_count,
+    friend_count: profileData.value.friend_count
+  } : {
+    collection_count: 0,
+    comment_count: 0,
+    friend_count: 0
+  }
+})
 
 // Edit mode
 const isEditing = ref(false)
@@ -28,13 +74,57 @@ const userComments = ref<(UserComment & { media_title?: string; media_poster?: s
 const isLoadingComments = ref(false)
 
 onMounted(async () => {
+  await loadProfile()
   loadUserComments()
 })
+
+// Watch for route changes
+watch(() => route.params.id, async () => {
+  await loadProfile()
+  loadUserComments()
+})
+
+const loadProfile = async () => {
+  const userId = route.params.id as string | undefined
+  
+  // If no userId or it's the current user, no need to fetch
+  if (!userId || userId === authStore.currentUser?.id) {
+    profileData.value = null
+    return
+  }
+  
+  // Fetch other user's profile
+  isLoadingProfile.value = true
+  try {
+    profileData.value = await getUserById(userId)
+  } catch (error) {
+    console.error('Error loading user profile:', error)
+    // Redirect to own profile on error
+    router.push({ name: 'profile' })
+  } finally {
+    isLoadingProfile.value = false
+  }
+}
 
 const loadUserComments = async () => {
   isLoadingComments.value = true
   try {
-    // Fetch real comments from API
+    const userId = route.params.id as string | undefined
+    
+    // If viewing another user's profile, fetch their comments only
+    if (userId && userId !== authStore.currentUser?.id) {
+      const comments = await getUserCommentsByUserId(userId)
+      // For other users, we only show their comments without merging with collection
+      userComments.value = comments.map(comment => ({
+        ...comment,
+        media_title: undefined,
+        media_poster: undefined,
+        rating: undefined
+      }))
+      return
+    }
+    
+    // For own profile, merge comments with collection ratings
     const comments = await getUserComments()
     
     // Get all rated items from collection
@@ -287,6 +377,7 @@ const renderStars = (rating: number) => {
                 {{ user.username }}
               </h1>
               <button
+                v-if="isOwnProfile"
                 @click="startEditing"
                 class="p-1 text-[#ecebe8] opacity-40 hover:opacity-100 transition-opacity"
               >
@@ -312,21 +403,21 @@ const renderStars = (rating: number) => {
       <!-- Stats -->
       <div class="grid grid-cols-3 gap-4 mb-8">
         <div class="bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl p-6 text-center">
-          <div class="text-2xl text-[#ecebe8] font-bold">{{ authStore.collection?.length || 0 }}</div>
+          <div class="text-2xl text-[#ecebe8] font-bold">{{ stats.collection_count }}</div>
           <div class="text-[#ecebe8] opacity-50 text-sm flex items-center justify-center gap-1 mt-1">
             <Film class="w-4 h-4" />
             Films
           </div>
         </div>
         <div class="bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl p-6 text-center">
-          <div class="text-2xl text-[#ecebe8] font-bold">{{ userComments.length }}</div>
+          <div class="text-2xl text-[#ecebe8] font-bold">{{ stats.comment_count }}</div>
           <div class="text-[#ecebe8] opacity-50 text-sm flex items-center justify-center gap-1 mt-1">
             <MessageCircle class="w-4 h-4" />
             Avis
           </div>
         </div>
         <div class="bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl p-6 text-center">
-          <div class="text-2xl text-[#ecebe8] font-bold">{{ authStore.following?.length || 0 }}</div>
+          <div class="text-2xl text-[#ecebe8] font-bold">{{ stats.friend_count }}</div>
           <div class="text-[#ecebe8] opacity-50 text-sm flex items-center justify-center gap-1 mt-1">
             <Users class="w-4 h-4" />
             Abonnements
