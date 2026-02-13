@@ -687,4 +687,55 @@ router.get('/user/me', authMiddleware, async (req: Request, res: Response) => {
     }
 });
 
+// ============================================
+// GET /api/comments/user/:user_id
+// Get comments by specific user ID
+// ============================================
+router.get('/user/:user_id', async (req: Request, res: Response) => {
+    try {
+        const { user_id } = req.params;
+
+        if (!user_id) {
+            return res.status(400).json({
+                success: false,
+                error: { message: 'user_id est requis' },
+            });
+        }
+
+        const { data: comments, error: commentsError } = await db
+            .from('comments')
+            .select(`
+                id,
+                user_id,
+                media_id,
+                media_type,
+                text,
+                image_urls,
+                created_at,
+                updated_at
+            `)
+            .eq('user_id', user_id)
+            .order('created_at', { ascending: false });
+
+        if (commentsError) {
+            console.error('Error fetching user comments:', commentsError);
+            return res.status(500).json({
+                success: false,
+                error: { message: 'Erreur lors de la récupération des commentaires' },
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: comments || [],
+        });
+    } catch (error) {
+        console.error('Unexpected error in get user comments:', error);
+        res.status(500).json({
+            success: false,
+            error: { message: 'Erreur serveur inattendue' },
+        });
+    }
+});
+
 export default router;
