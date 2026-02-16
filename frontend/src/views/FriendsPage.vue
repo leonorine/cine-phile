@@ -138,46 +138,6 @@ const getInitials = (name: string) => {
       <div v-if="isLoading" class="flex items-center justify-center py-20">
         <Loader2 class="w-8 h-8 text-[#03b5aa] animate-spin" />
       </div>
-
-      <!-- Following List -->
-      <div v-else-if="authStore.following.length > 0" class="space-y-3">
-        <h3 class="text-sm text-[#ecebe8] opacity-60 mb-4 uppercase tracking-wide">Mes abonnements</h3>
-        <div 
-          v-for="user in authStore.following" 
-          :key="user.id"
-          class="p-4 bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl flex items-center justify-between hover:border-[#ecebe8]/20 transition-all"
-        >
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#03b5aa] to-[#7a306c] flex items-center justify-center text-[#ecebe8] font-medium overflow-hidden">
-              <img v-if="user.avatar_url" :src="user.avatar_url" :alt="user.pseudo" class="w-full h-full object-cover" />
-              <template v-else>{{ getInitials(user.pseudo) }}</template>
-            </div>
-            <div>
-              <p class="text-[#ecebe8] font-medium">{{ user.pseudo }}</p>
-            </div>
-          </div>
-          <button
-            @click="handleUnfollow(user.id)"
-            class="px-4 py-2 text-[#7a306c] text-sm hover:bg-[#7a306c]/10 rounded-lg transition-all"
-          >
-            Se désabonner
-          </button>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div v-else class="text-center py-20">
-        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-[#071429]/60 border border-[#ecebe8]/10 flex items-center justify-center">
-          <Users class="w-10 h-10 text-[#ecebe8] opacity-30" />
-        </div>
-        <h3 
-          class="text-xl text-[#ecebe8] mb-2" 
-          style="font-family: var(--font-serif); font-weight: 500;"
-        >
-          Aucun abonnement pour l'instant
-        </h3>
-        <p class="text-[#ecebe8] opacity-50 mb-6">Recherchez des utilisateurs pour les suivre</p>
-      </div>
     </div>
   </div>
 </template>
