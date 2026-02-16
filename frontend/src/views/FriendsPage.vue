@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { Users, Search, UserPlus, Loader2 } from 'lucide-vue-next'
+import { Search, UserPlus, Loader2 } from 'lucide-vue-next'
 import { searchUsers } from '@/services/users.service'
 import { followUser, unfollowUser } from '@/services/follows.service'
 import type { FollowUser } from '@/services/follows.service'

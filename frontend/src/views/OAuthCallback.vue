@@ -30,7 +30,7 @@ onMounted(async () => {
     const response = await exchangeOAuthToken({
       access_token: session.access_token,
       refresh_token: session.refresh_token,
-      provider_token: session.provider_token,
+      provider_token: session.provider_token || undefined,
       user: {
         id: session.user.id,
         email: session.user.email || '',
