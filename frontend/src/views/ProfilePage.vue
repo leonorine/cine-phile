@@ -2,11 +2,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { Camera, Film, MessageCircle, Users, Settings, ArrowLeft, Edit2, Save, X, Loader2, Star } from 'lucide-vue-next'
+import { Camera, Film, MessageCircle, Users, Settings, ArrowLeft, Edit2, Save, X, Loader2, Star, UserPlus } from 'lucide-vue-next'
 import { updateProfile, uploadAvatar } from '@/services/profile.service'
 import { getUserComments, getUserCommentsByUserId, type UserComment } from '@/services/comments.service'
 import { getImageUrl } from '@/services/media.service'
 import { getUserById, type UserProfile } from '@/services/users.service'
+import { getUserFollowers, getUserFollowing, followUser, unfollowUser, type FollowUser } from '@/services/follows.service'
 
 const router = useRouter()
 const route = useRoute()
@@ -44,17 +45,15 @@ const stats = computed(() => {
     return {
       collection_count: authStore.collection.length,
       comment_count: userComments.value.length,
-      friend_count: authStore.following.length
+      followers_count: followers.value.length,
+      following_count: following.value.length
     }
   }
-  return profileData.value ? {
-    collection_count: profileData.value.collection_count,
-    comment_count: profileData.value.comment_count,
-    friend_count: profileData.value.friend_count
-  } : {
-    collection_count: 0,
-    comment_count: 0,
-    friend_count: 0
+  return {
+    collection_count: profileData.value?.collection_count || 0,
+    comment_count: profileData.value?.comment_count || 0,
+    followers_count: followers.value.length,
+    following_count: following.value.length
   }
 })
 
@@ -73,15 +72,27 @@ const isUploadingAvatar = ref(false)
 const userComments = ref<(UserComment & { media_title?: string; media_poster?: string; rating?: number })[]>([])
 const isLoadingComments = ref(false)
 
+// Followers/Following data
+const followers = ref<FollowUser[]>([])
+const following = ref<FollowUser[]>([])
+const isLoadingFollowers = ref(false)
+
+// Modal state
+const showFollowModal = ref(false)
+const modalType = ref<'followers' | 'following'>('followers')
+const modalUsers = computed(() => modalType.value === 'followers' ? followers.value : following.value)
+
 onMounted(async () => {
   await loadProfile()
   loadUserComments()
+  loadFollowersData()
 })
 
 // Watch for route changes
 watch(() => route.params.id, async () => {
   await loadProfile()
   loadUserComments()
+  loadFollowersData()
 })
 
 const loadProfile = async () => {
@@ -184,6 +195,70 @@ const navigateTo = (routeName: string) => {
 const viewMediaDetails = (mediaId: string, mediaType: 'film' | 'serie') => {
   const type = mediaType === 'film' ? 'movie' : 'tv'
   router.push({ name: 'movie-details', params: { id: mediaId }, query: { type } })
+}
+
+const loadFollowersData = async () => {
+  const userId = isOwnProfile.value ? authStore.currentUser?.id : route.params.id as string
+  
+  if (!userId) return
+  
+  isLoadingFollowers.value = true
+  try {
+    const [followersData, followingData] = await Promise.all([
+      getUserFollowers(userId),
+      getUserFollowing(userId)
+    ])
+    followers.value = followersData
+    following.value = followingData
+  } catch (error) {
+    console.error('Error loading followers/following:', error)
+  } finally {
+    isLoadingFollowers.value = false
+  }
+}
+
+// Modal functions
+const openFollowersModal = () => {
+  modalType.value = 'followers'
+  showFollowModal.value = true
+}
+
+const openFollowingModal = () => {
+  modalType.value = 'following'
+  showFollowModal.value = true
+}
+
+const closeModal = () => {
+  showFollowModal.value = false
+}
+
+const handleFollowInModal = async (userId: string) => {
+  try {
+    await followUser(userId)
+    await loadFollowersData()
+    await authStore.loadFriends()
+  } catch (error) {
+    console.error('Error following user:', error)
+  }
+}
+
+const handleUnfollowInModal = async (userId: string) => {
+  try {
+    await unfollowUser(userId)
+    await loadFollowersData()
+    await authStore.loadFriends()
+  } catch (error) {
+    console.error('Error unfollowing user:', error)
+  }
+}
+
+const isFollowing = (userId: string) => {
+  return authStore.following.some(u => u.id === userId)
+}
+
+const viewUserProfile = (userId: string) => {
+  closeModal()
+  router.push({ name: 'profile', params: { id: userId } })
 }
 
 // Edit profile
@@ -402,7 +477,7 @@ const renderStars = (rating: number) => {
       </div>
 
       <!-- Stats -->
-      <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl p-6 text-center">
           <div class="text-2xl text-[#ecebe8] font-bold">{{ stats.collection_count }}</div>
           <div class="text-[#ecebe8] opacity-50 text-sm flex items-center justify-center gap-1 mt-1">
@@ -417,8 +492,21 @@ const renderStars = (rating: number) => {
             Avis
           </div>
         </div>
-        <div class="bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl p-6 text-center">
-          <div class="text-2xl text-[#ecebe8] font-bold">{{ stats.friend_count }}</div>
+        <div 
+          @click="openFollowersModal"
+          class="bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl p-6 text-center cursor-pointer hover:border-[#03b5aa]/30 transition-all"
+        >
+          <div class="text-2xl text-[#ecebe8] font-bold">{{ stats.followers_count }}</div>
+          <div class="text-[#ecebe8] opacity-50 text-sm flex items-center justify-center gap-1 mt-1">
+            <Users class="w-4 h-4" />
+            Abonnés
+          </div>
+        </div>
+        <div 
+          @click="openFollowingModal"
+          class="bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl p-6 text-center cursor-pointer hover:border-[#03b5aa]/30 transition-all"
+        >
+          <div class="text-2xl text-[#ecebe8] font-bold">{{ stats.following_count }}</div>
           <div class="text-[#ecebe8] opacity-50 text-sm flex items-center justify-center gap-1 mt-1">
             <Users class="w-4 h-4" />
             Abonnements
@@ -527,6 +615,76 @@ const renderStars = (rating: number) => {
             <p class="text-[#ecebe8] opacity-50 text-sm">Préférences du compte</p>
           </div>
         </button>
+      </div>
+    </div>
+
+    <!-- Followers/Following Modal -->
+    <div 
+      v-if="showFollowModal"
+      class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+      @click="closeModal"
+    >
+      <div 
+        class="bg-[#0a1929] border border-[#ecebe8]/10 rounded-2xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col"
+        @click.stop
+      >
+        <!-- Modal Header -->
+        <div class="p-6 border-b border-[#ecebe8]/10 flex items-center justify-between">
+          <h3 class="text-xl text-[#ecebe8] font-medium">
+            {{ modalType === 'followers' ? 'Abonnés' : 'Abonnements' }}
+          </h3>
+          <button
+            @click="closeModal"
+            class="p-2 hover:bg-[#ecebe8]/10 rounded-lg transition-all"
+          >
+            <X class="w-5 h-5 text-[#ecebe8]" />
+          </button>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="flex-1 overflow-y-auto p-6">
+          <div v-if="modalUsers.length === 0" class="text-center py-8 text-[#ecebe8] opacity-50">
+            <Users class="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p>{{ modalType === 'followers' ? 'Aucun abonné' : 'Aucun abonnement' }}</p>
+          </div>
+
+          <div v-else class="space-y-3">
+            <div
+              v-for="modalUser in modalUsers"
+              :key="modalUser.id"
+              class="p-4 bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl flex items-center justify-between hover:border-[#ecebe8]/20 transition-all"
+            >
+              <div 
+                class="flex items-center gap-4 flex-1 cursor-pointer"
+                @click="viewUserProfile(modalUser.id)"
+              >
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#03b5aa] to-[#7a306c] flex items-center justify-center text-[#ecebe8] font-medium overflow-hidden">
+                  <img v-if="modalUser.avatar_url" :src="modalUser.avatar_url" :alt="modalUser.pseudo" class="w-full h-full object-cover" />
+                  <template v-else>{{ getInitials(modalUser.pseudo) }}</template>
+                </div>
+                <div>
+                  <p class="text-[#ecebe8] font-medium">{{ modalUser.pseudo }}</p>
+                </div>
+              </div>
+
+              <!-- Follow/Unfollow Button (only if not viewing own profile) -->
+              <button
+                v-if="modalUser.id !== authStore.currentUser?.id && !isFollowing(modalUser.id)"
+                @click="handleFollowInModal(modalUser.id)"
+                class="p-2 bg-[#03b5aa]/10 text-[#03b5aa] rounded-lg hover:bg-[#03b5aa]/20 transition-all"
+              >
+                <UserPlus class="w-5 h-5" />
+              </button>
+              <button
+                v-else-if="modalUser.id !== authStore.currentUser?.id"
+                @click="handleUnfollowInModal(modalUser.id)"
+                class="px-4 py-2 text-[#7a306c] text-sm hover:bg-[#7a306c]/10 rounded-lg transition-all"
+              >
+                Se désabonner
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

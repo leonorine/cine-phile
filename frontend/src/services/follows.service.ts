@@ -34,3 +34,15 @@ export async function checkIfFollowing(userId: string): Promise<boolean> {
     const response = await api.get<ApiResponse<{ isFollowing: boolean }>>(`/follows/check/${userId}`)
     return response.data.data.isFollowing
 }
+
+// Get followers of a specific user
+export async function getUserFollowers(userId: string): Promise<FollowUser[]> {
+    const response = await api.get<ApiResponse<FollowUser[]>>(`/follows/${userId}/followers`)
+    return response.data.data
+}
+
+// Get users that a specific user follows
+export async function getUserFollowing(userId: string): Promise<FollowUser[]> {
+    const response = await api.get<ApiResponse<FollowUser[]>>(`/follows/${userId}/following`)
+    return response.data.data
+}

@@ -308,6 +308,166 @@ router.get('/following', async (req: Request, res: Response) => {
 });
 
 // ============================================
+// GET /api/follows/:userId/followers
+// Get followers of a specific user
+// ============================================
+router.get('/:userId/followers', async (req: Request, res: Response) => {
+    try {
+        // Validate params
+        const validationResult = userIdSchema.safeParse(req.params);
+
+        if (!validationResult.success) {
+            return res.status(400).json({
+                success: false,
+                error: {
+                    message: validationResult.error.issues[0].message,
+                },
+            });
+        }
+
+        const { userId } = validationResult.data;
+
+        // Get followers (users who follow this user)
+        const { data: follows, error: followsError } = await db
+            .from('follows')
+            .select('follower_id')
+            .eq('following_id', userId);
+
+        if (followsError) {
+            console.error('Error fetching followers:', followsError);
+            return res.status(500).json({
+                success: false,
+                error: {
+                    message: 'Erreur lors de la récupération des abonnés',
+                },
+            });
+        }
+
+        const followerIds = follows.map((f: any) => f.follower_id);
+
+        if (followerIds.length === 0) {
+            return res.status(200).json({
+                success: true,
+                data: [],
+            });
+        }
+
+        // Fetch follower details
+        const { data: followers, error: followersError } = await db
+            .from('users')
+            .select('id, pseudo, avatar_url')
+            .in('id', followerIds);
+
+        if (followersError) {
+            console.error('Error fetching follower details:', followersError);
+            return res.status(500).json({
+                success: false,
+                error: {
+                    message: 'Erreur lors de la récupération des détails des abonnés',
+                },
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: followers.map((f: any) => ({
+                id: f.id,
+                pseudo: f.pseudo,
+                avatar_url: f.avatar_url,
+            })),
+        });
+    } catch (error) {
+        console.error('Unexpected error in get user followers:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                message: 'Erreur serveur inattendue',
+            },
+        });
+    }
+});
+
+// ============================================
+// GET /api/follows/:userId/following
+// Get users that a specific user follows
+// ============================================
+router.get('/:userId/following', async (req: Request, res: Response) => {
+    try {
+        // Validate params
+        const validationResult = userIdSchema.safeParse(req.params);
+
+        if (!validationResult.success) {
+            return res.status(400).json({
+                success: false,
+                error: {
+                    message: validationResult.error.issues[0].message,
+                },
+            });
+        }
+
+        const { userId } = validationResult.data;
+
+        // Get following (users this user follows)
+        const { data: follows, error: followsError } = await db
+            .from('follows')
+            .select('following_id')
+            .eq('follower_id', userId);
+
+        if (followsError) {
+            console.error('Error fetching following:', followsError);
+            return res.status(500).json({
+                success: false,
+                error: {
+                    message: 'Erreur lors de la récupération des abonnements',
+                },
+            });
+        }
+
+        const followingIds = follows.map((f: any) => f.following_id);
+
+        if (followingIds.length === 0) {
+            return res.status(200).json({
+                success: true,
+                data: [],
+            });
+        }
+
+        // Fetch following details
+        const { data: following, error: followingError } = await db
+            .from('users')
+            .select('id, pseudo, avatar_url')
+            .in('id', followingIds);
+
+        if (followingError) {
+            console.error('Error fetching following details:', followingError);
+            return res.status(500).json({
+                success: false,
+                error: {
+                    message: 'Erreur lors de la récupération des détails des abonnements',
+                },
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: following.map((f: any) => ({
+                id: f.id,
+                pseudo: f.pseudo,
+                avatar_url: f.avatar_url,
+            })),
+        });
+    } catch (error) {
+        console.error('Unexpected error in get user following:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                message: 'Erreur serveur inattendue',
+            },
+        });
+    }
+});
+
+// ============================================
 // GET /api/follows/check/:userId
 // Check if I follow a specific user
 // ============================================
