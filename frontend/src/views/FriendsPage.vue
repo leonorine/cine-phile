@@ -52,8 +52,6 @@ const handleFollow = async (userId: string) => {
   try {
     await followUser(userId)
     await authStore.loadFriends()
-    // Remove from search results after following
-    searchResults.value = searchResults.value.filter(u => u.id !== userId)
   } catch (error) {
     console.error('Error following user:', error)
   }
@@ -74,6 +72,10 @@ const viewUserProfile = (userId: string) => {
 
 const getInitials = (name: string) => {
   return name?.substring(0, 2).toUpperCase() || '??'
+}
+
+const isFollowing = (userId: string) => {
+  return authStore.following.some(u => u.id === userId)
 }
 </script>
 
@@ -125,10 +127,18 @@ const getInitials = (name: string) => {
               </div>
             </div>
             <button
+              v-if="!isFollowing(user.id)"
               @click.stop="handleFollow(user.id)"
               class="p-2 bg-[#03b5aa]/10 text-[#03b5aa] rounded-lg hover:bg-[#03b5aa]/20 transition-all"
             >
               <UserPlus class="w-5 h-5" />
+            </button>
+            <button
+              v-else
+              @click.stop="handleUnfollow(user.id)"
+              class="px-4 py-2 text-[#7a306c] text-sm hover:bg-[#7a306c]/10 rounded-lg transition-all"
+            >
+              Se désabonner
             </button>
           </div>
         </div>
