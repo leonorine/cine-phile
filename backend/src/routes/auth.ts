@@ -594,50 +594,63 @@ router.post('/upload-avatar', authMiddleware, async (req: Request, res: Response
 // ============================================
 router.post('/oauth/callback', async (req: Request, res: Response) => {
     try {
+        console.log('OAuth callback received:', { body: req.body });
         const { access_token, user } = req.body;
 
         if (!access_token || !user || !user.email) {
+            console.error('Invalid OAuth data:', { access_token: !!access_token, user: !!user, email: user?.email });
             return res.status(400).json({
                 success: false,
                 error: { message: 'Données OAuth invalides' }
             });
         }
 
+        console.log('Verifying Supabase token for user:', user.email);
+
         // Verify Supabase token
         const { data: { user: supabaseUser }, error: verifyError } = await supabaseAuth.getUser(access_token);
 
         if (verifyError || !supabaseUser) {
+            console.error('Supabase token verification error:', verifyError);
             return res.status(401).json({
                 success: false,
                 error: { message: 'Token OAuth invalide' }
             });
         }
 
-        // Check if user exists in our database
-        const { data: existingUser } = await db
+        console.log('Token verified, checking if user exists in Supabase Auth');
+
+        // Check if user exists in our database by Supabase Auth ID
+        const { data: existingUser, error: fetchError } = await db
             .from('users')
             .select('*')
-            .eq('email', user.email)
-            .single();
+            .eq('id', supabaseUser.id)
+            .maybeSingle();
 
         let userId: string;
+        let pseudo: string;
         let username: string;
 
         if (existingUser) {
-            // User exists, update last login
+            console.log('User exists:', existingUser.id);
             userId = existingUser.id;
-            username = existingUser.username;
+            pseudo = existingUser.pseudo;
+            username = existingUser.pseudo;
         } else {
+            console.log('Creating new user from OAuth data');
             // Create new user from OAuth data
-            const newUsername = user.user_metadata?.full_name || user.email.split('@')[0];
+            const newPseudo = user.user_metadata?.full_name?.replace(/\s+/g, '') || user.email.split('@')[0];
+
+            console.log('New pseudo:', newPseudo);
 
             const { data: newUser, error: createError } = await db
                 .from('users')
                 .insert({
-                    email: user.email,
-                    username: newUsername,
+                    id: supabaseUser.id, // Use Supabase Auth ID
+                    pseudo: newPseudo,
+                    username: newPseudo,
                     avatar_url: user.user_metadata?.avatar_url || null,
-                    password_hash: '' // OAuth users don't have password
+                    bio: null
                 })
                 .select()
                 .single();
@@ -646,12 +659,14 @@ router.post('/oauth/callback', async (req: Request, res: Response) => {
                 console.error('Error creating OAuth user:', createError);
                 return res.status(500).json({
                     success: false,
-                    error: { message: 'Erreur lors de la création du compte' }
+                    error: { message: 'Erreur lors de la création du compte: ' + (createError?.message || 'Unknown error') }
                 });
             }
 
+            console.log('User created:', newUser.id);
             userId = newUser.id;
-            username = newUser.username;
+            pseudo = newUser.pseudo;
+            username = newUser.pseudo;
         }
 
         // Generate backend JWT
@@ -663,17 +678,30 @@ router.post('/oauth/callback', async (req: Request, res: Response) => {
         );
 
         // Get full user profile
-        const { data: userProfile } = await db
+        const { data: userProfile, error: profileError } = await db
             .from('users')
-            .select('id, username, email, avatar_url, bio, created_at, updated_at')
+            .select('id, pseudo, avatar_url, bio, created_at, updated_at, username')
             .eq('id', userId)
             .single();
+
+        if (profileError || !userProfile) {
+            console.error('Error fetching user profile:', profileError);
+            return res.status(500).json({
+                success: false,
+                error: { message: 'Erreur lors de la récupération du profil' }
+            });
+        }
+
+        console.log('OAuth callback successful for user:', userProfile.pseudo);
 
         res.status(200).json({
             success: true,
             data: {
-                token,
-                user: userProfile
+                token: access_token,
+                user: {
+                    ...userProfile,
+                    email: user.email // Add email from Supabase Auth
+                }
             }
         });
     } catch (error) {
