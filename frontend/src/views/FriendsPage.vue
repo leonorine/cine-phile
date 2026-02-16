@@ -32,11 +32,17 @@ const handleSearch = async () => {
     return
   }
 
+  // Only search if at least 2 characters are typed
+  if (searchQuery.value.trim().length < 2) {
+    searchResults.value = []
+    return
+  }
+
   isSearching.value = true
   try {
     searchResults.value = await searchUsers(searchQuery.value)
   } catch (error) {
-    console.error('Search error:', error)
+    console.error('Error searching users:', error)
   } finally {
     isSearching.value = false
   }

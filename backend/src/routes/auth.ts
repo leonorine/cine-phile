@@ -301,6 +301,7 @@ router.get('/user', authMiddleware, async (req: Request, res: Response) => {
                 id: userProfile.id,
                 email: req.user!.email,
                 username: userProfile.username,
+                avatar_url: userProfile.avatar_url,
                 bio: userProfile.bio,
                 created_at: userProfile.created_at,
                 updated_at: userProfile.updated_at,
