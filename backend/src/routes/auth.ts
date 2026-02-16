@@ -301,7 +301,6 @@ router.get('/user', authMiddleware, async (req: Request, res: Response) => {
                 id: userProfile.id,
                 email: req.user!.email,
                 username: userProfile.username,
-                avatar_url: userProfile.avatar_url,
                 bio: userProfile.bio,
                 created_at: userProfile.created_at,
                 updated_at: userProfile.updated_at,
@@ -648,8 +647,7 @@ router.post('/oauth/callback', async (req: Request, res: Response) => {
                 .insert({
                     id: supabaseUser.id, // Use Supabase Auth ID
                     pseudo: newPseudo,
-                    username: newPseudo,
-                    avatar_url: user.user_metadata?.avatar_url || null,
+                    avatar_url: null, // Don't import Google avatar
                     bio: null
                 })
                 .select()
