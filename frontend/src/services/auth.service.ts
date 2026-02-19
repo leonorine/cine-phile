@@ -55,7 +55,11 @@ export async function register(
 // Logout request
 export async function logout(): Promise<void> {
     try {
+        const { supabase } = await import('./supabase')
+        await supabase.auth.signOut()
         await api.post('/auth/logout')
+    } catch (error) {
+        console.error('Error during logout:', error)
     } finally {
         removeToken()
     }

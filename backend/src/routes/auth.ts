@@ -649,7 +649,8 @@ router.post('/oauth/callback', async (req: Request, res: Response) => {
                     id: supabaseUser.id, // Use Supabase Auth ID
                     pseudo: newPseudo,
                     avatar_url: null, // Don't import Google avatar
-                    bio: null
+                    bio: null,
+                    username: newPseudo,
                 })
                 .select()
                 .single();
