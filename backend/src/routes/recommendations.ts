@@ -122,20 +122,39 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
         }
 
         // Get recommendations based on top genres
-        const response = await axios.get(`${TMDB_BASE_URL}/discover/movie`, {
-            params: {
-                api_key: TMDB_API_KEY,
-                language: 'fr-FR',
-                with_genres: sortedGenres.join(','),
-                sort_by: 'vote_average.desc',
-                'vote_count.gte': 500,
-                page: 1,
-            },
-        });
+        // Fetch page 1 AND page 2 to have enough results after filtering
+        const [page1, page2] = await Promise.all([
+            axios.get(`${TMDB_BASE_URL}/discover/movie`, {
+                params: {
+                    api_key: TMDB_API_KEY,
+                    language: 'fr-FR',
+                    with_genres: sortedGenres.join(','),
+                    sort_by: 'vote_average.desc',
+                    'vote_count.gte': 200,
+                    page: 1,
+                },
+            }),
+            axios.get(`${TMDB_BASE_URL}/discover/movie`, {
+                params: {
+                    api_key: TMDB_API_KEY,
+                    language: 'fr-FR',
+                    with_genres: sortedGenres.join(','),
+                    sort_by: 'vote_average.desc',
+                    'vote_count.gte': 200,
+                    page: 2,
+                },
+            }),
+        ]);
 
-        // Filter out movies already in collection
-        const recommendations = response.data.results
-            .filter((movie: any) => !watchedMediaIds.has(`film-${movie.id}`))
+        const allResults = [...page1.data.results, ...page2.data.results];
+
+        // Filter out movies already in collection (stored as 'film-' in our DB)
+        // TMDB discover returns movies so we check both 'film-' and 'movie-' prefixes
+        const recommendations = allResults
+            .filter((movie: any) =>
+                !watchedMediaIds.has(`film-${movie.id}`) &&
+                !watchedMediaIds.has(`movie-${movie.id}`)
+            )
             .slice(0, 10);
 
         // Build reason string based on favorite genres

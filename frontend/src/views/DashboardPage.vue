@@ -164,17 +164,21 @@ const viewMovieDetails = (id: number, mediaType: 'movie' | 'tv') => {
 
           <div v-else-if="recommendations?.recommendations?.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <div 
-              v-for="movie in recommendations.recommendations.slice(0, 5)" 
+              v-for="movie in recommendations.recommendations.slice(0, 10)" 
               :key="movie.id"
               @click="viewMovieDetails(movie.id, 'movie')"
               class="relative group cursor-pointer"
             >
               <div class="aspect-[2/3] rounded-xl overflow-hidden bg-[#071429]/60 border border-[#ecebe8]/10">
                 <img 
+                  v-if="movie.poster_path"
                   :src="getImageUrl(movie.poster_path, 'w342')"
                   :alt="movie.title || movie.name"
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
+                <div v-else class="w-full h-full flex items-center justify-center">
+                  <Film class="w-8 h-8 text-[#ecebe8]/20" />
+                </div>
               </div>
               <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity">
                 <p class="text-[#ecebe8] text-sm font-medium truncate">{{ movie.title || movie.name }}</p>
@@ -184,6 +188,10 @@ const viewMovieDetails = (id: number, mediaType: 'movie' | 'tv') => {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div v-else class="text-center py-10 text-[#ecebe8]/40 text-sm">
+            Aucune recommandation disponible pour le moment
           </div>
         </section>
 

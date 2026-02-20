@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Bell, Check, Loader2 } from 'lucide-vue-next'
+
+const router = useRouter()
 
 const authStore = useAuthStore()
 const isLoading = ref(true)
@@ -23,9 +26,35 @@ const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'like': return '❤️'
     case 'comment': return '💬'
+    case 'follow': return '👤'
     case 'friend_request': return '👋'
     case 'friend_accepted': return '🎉'
     default: return '🔔'
+  }
+}
+
+const getNotificationText = (notification: any) => {
+  const actor = notification.actor_pseudo || 'Quelqu\'un'
+  switch (notification.type) {
+    case 'like':
+      return { title: `${actor} a aimé votre avis`, message: 'A aimé l\'un de vos commentaires' }
+    case 'comment':
+      return { title: `${actor} a commenté`, message: 'A commenté l\'un de vos films' }
+    case 'follow':
+    case 'friend_request':
+      return { title: `${actor} s'est abonné à votre profil`, message: 'Nouvel abonné' }
+    case 'friend_accepted':
+      return { title: `${actor} est maintenant votre ami`, message: '' }
+    default:
+      return { title: `Nouvelle notification de ${actor}`, message: '' }
+  }
+}
+
+const handleNotificationClick = async (notification: any) => {
+  await authStore.markNotificationAsRead(notification.id)
+  // Navigate to actor's profile if available
+  if (notification.actor_id) {
+    router.push({ name: 'profile', params: { id: notification.actor_id as string } })
   }
 }
 
@@ -37,14 +66,13 @@ const formatTime = (dateString: string) => {
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
 
+  if (minutes < 1) return 'À l\'instant'
   if (minutes < 60) return `${minutes}min`
   if (hours < 24) return `${hours}h`
   return `${days}j`
 }
 
-const markAsRead = async (id: string) => {
-  await authStore.markNotificationAsRead(id)
-}
+
 
 const markAllAsRead = async () => {
   await authStore.markAllNotificationsAsRead()
@@ -87,7 +115,7 @@ const markAllAsRead = async () => {
         <div 
           v-for="notification in notifications" 
           :key="notification.id"
-          @click="markAsRead(notification.id)"
+          @click="handleNotificationClick(notification)"
           :class="[
             'p-4 rounded-xl border transition-all cursor-pointer',
             notification.read 
@@ -96,8 +124,14 @@ const markAllAsRead = async () => {
           ]"
         >
           <div class="flex items-start gap-4">
-            <div class="text-2xl flex-shrink-0">
-              {{ getNotificationIcon(notification.type) }}
+            <!-- Avatar or icon -->
+            <div class="flex-shrink-0">
+              <div v-if="notification.actor_avatar" class="w-10 h-10 rounded-full overflow-hidden">
+                <img :src="notification.actor_avatar || undefined" :alt="notification.actor_pseudo || ''" class="w-full h-full object-cover" />
+              </div>
+              <div v-else class="text-2xl leading-none">
+                {{ getNotificationIcon(notification.type) }}
+              </div>
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-4">
@@ -107,24 +141,25 @@ const markAllAsRead = async () => {
                     notification.read ? 'text-[#ecebe8]/60' : 'text-[#ecebe8]'
                   ]"
                 >
-                  {{ notification.title }}
+                  {{ getNotificationText(notification).title }}
                 </p>
                 <span class="text-[#ecebe8] opacity-40 text-xs flex-shrink-0">
                   {{ formatTime(notification.created_at) }}
                 </span>
               </div>
               <p 
+                v-if="getNotificationText(notification).message"
                 :class="[
-                  'text-sm mt-1',
-                  notification.read ? 'text-[#ecebe8]/40' : 'text-[#ecebe8]/70'
+                  'text-xs mt-0.5',
+                  notification.read ? 'text-[#ecebe8]/30' : 'text-[#ecebe8]/50'
                 ]"
               >
-                {{ notification.message }}
+                {{ getNotificationText(notification).message }}
               </p>
             </div>
             <div 
               v-if="!notification.read"
-              class="w-2 h-2 rounded-full bg-[#03b5aa] flex-shrink-0"
+              class="w-2 h-2 rounded-full bg-[#03b5aa] flex-shrink-0 mt-1"
             />
           </div>
         </div>

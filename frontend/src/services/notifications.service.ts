@@ -2,15 +2,16 @@ import api from './api'
 import type { ApiResponse } from './api'
 
 // Notification types
-export type NotificationType = 'like' | 'comment' | 'friend_request' | 'friend_accepted' | 'system'
+export type NotificationType = 'like' | 'comment' | 'follow' | 'friend_request' | 'friend_accepted' | 'system'
 
 export interface Notification {
     id: string
     user_id: string
     type: NotificationType
-    title: string
-    message: string
-    data: Record<string, any> | null
+    actor_id: string | null
+    actor_pseudo: string | null
+    actor_avatar: string | null
+    media_id: string | null
     read: boolean
     created_at: string
 }
@@ -21,18 +22,12 @@ export async function getNotifications(): Promise<Notification[]> {
     return response.data.data
 }
 
-// Mark notification as read
+// Mark one notification as read
 export async function markAsRead(notificationId: string): Promise<void> {
-    await api.put(`/notifications/${notificationId}`, { read: true })
+    await api.post(`/notifications/${notificationId}/read`)
 }
 
 // Mark all notifications as read
 export async function markAllAsRead(): Promise<void> {
-    await api.put('/notifications/read-all')
-}
-
-// Get unread count
-export async function getUnreadCount(): Promise<number> {
-    const response = await api.get<ApiResponse<{ count: number }>>('/notifications/unread-count')
-    return response.data.data.count
+    await api.post('/notifications/read-all')
 }

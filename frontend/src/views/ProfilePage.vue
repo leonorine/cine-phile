@@ -583,8 +583,8 @@ const renderStars = (rating: number) => {
         </div>
       </div>
 
-      <!-- Quick Actions -->
-      <div class="space-y-3">
+      <!-- Quick Actions (own profile only) -->
+      <div v-if="isOwnProfile" class="space-y-3">
         <button
           @click="navigateTo('collection')"
           class="w-full p-4 bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl flex items-center gap-4 hover:border-[#03b5aa]/40 transition-all"

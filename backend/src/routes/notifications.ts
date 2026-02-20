@@ -76,6 +76,47 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // ============================================
+// POST /api/notifications/read-all  (must be BEFORE /:id/read)
+// ============================================
+router.post('/read-all', async (req: Request, res: Response) => {
+    try {
+        const userId = req.user!.id;
+
+        // Mark all notifications as read for this user
+        const { error } = await db
+            .from('notifications')
+            .update({ read: true })
+            .eq('user_id', userId)
+            .eq('read', false);
+
+        if (error) {
+            console.error('Error marking all notifications as read:', error);
+            return res.status(500).json({
+                success: false,
+                error: {
+                    message: 'Erreur lors de la mise à jour des notifications',
+                },
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                message: 'Toutes les notifications ont été marquées comme lues',
+            },
+        });
+    } catch (error) {
+        console.error('Unexpected error in mark all notifications as read:', error);
+        res.status(500).json({
+            success: false,
+            error: {
+                message: 'Erreur serveur inattendue',
+            },
+        });
+    }
+});
+
+// ============================================
 // POST /api/notifications/:id/read
 // ============================================
 router.post('/:id/read', async (req: Request, res: Response) => {
@@ -165,45 +206,5 @@ router.post('/:id/read', async (req: Request, res: Response) => {
     }
 });
 
-// ============================================
-// POST /api/notifications/read-all
-// ============================================
-router.post('/read-all', async (req: Request, res: Response) => {
-    try {
-        const userId = req.user!.id;
-
-        // Mark all notifications as read for this user
-        const { error } = await db
-            .from('notifications')
-            .update({ read: true })
-            .eq('user_id', userId)
-            .eq('read', false);
-
-        if (error) {
-            console.error('Error marking all notifications as read:', error);
-            return res.status(500).json({
-                success: false,
-                error: {
-                    message: 'Erreur lors de la mise à jour des notifications',
-                },
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            data: {
-                message: 'Toutes les notifications ont été marquées comme lues',
-            },
-        });
-    } catch (error) {
-        console.error('Unexpected error in mark all notifications as read:', error);
-        res.status(500).json({
-            success: false,
-            error: {
-                message: 'Erreur serveur inattendue',
-            },
-        });
-    }
-});
-
 export default router;
+
