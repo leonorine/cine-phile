@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMediaStore } from '@/stores/media'
-import { Search, Film, X, Loader2 } from 'lucide-vue-next'
+import { Search, Film, X, Loader2, Clock } from 'lucide-vue-next'
 import { getImageUrl } from '@/services/media.service'
 import ImageWithFallback from '@/components/ImageWithFallback.vue'
 
@@ -13,14 +13,55 @@ const mediaStore = useMediaStore()
 const searchQuery = ref('')
 const debounceTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
+// --- Click History ---
+interface ViewedMedia {
+  id: number
+  title: string
+  poster_path: string | null
+  media_type: 'movie' | 'tv'
+  vote_average?: number
+  release_date?: string
+}
+
+const HISTORY_KEY = 'cinephile_viewed_media'
+const MAX_HISTORY = 8
+const viewedHistory = ref<ViewedMedia[]>([])
+
+const loadViewedHistory = () => {
+  try {
+    const stored = localStorage.getItem(HISTORY_KEY)
+    viewedHistory.value = stored ? JSON.parse(stored) : []
+  } catch {
+    viewedHistory.value = []
+  }
+}
+
+const saveToViewedHistory = (item: ViewedMedia) => {
+  const history = viewedHistory.value.filter(h => !(h.id === item.id && h.media_type === item.media_type))
+  history.unshift(item)
+  viewedHistory.value = history.slice(0, MAX_HISTORY)
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(viewedHistory.value))
+}
+
+const removeFromViewedHistory = (id: number, mediaType: 'movie' | 'tv') => {
+  viewedHistory.value = viewedHistory.value.filter(h => !(h.id === id && h.media_type === mediaType))
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(viewedHistory.value))
+}
+
+const clearViewedHistory = () => {
+  viewedHistory.value = []
+  localStorage.removeItem(HISTORY_KEY)
+}
+
+const showHistory = computed(() => !searchQuery.value.trim() && viewedHistory.value.length > 0)
+
 onMounted(() => {
-  // Check if there's a query in the URL
+  loadViewedHistory()
   const q = route.query.q as string
   if (q) {
     searchQuery.value = q
     mediaStore.search(q)
   } else {
-    // Load trending on mount if no search query
     mediaStore.loadTrending()
   }
 })
@@ -30,14 +71,13 @@ watch(searchQuery, (newQuery) => {
   if (debounceTimer.value) {
     clearTimeout(debounceTimer.value)
   }
-  
   debounceTimer.value = setTimeout(() => {
     if (newQuery.trim()) {
       mediaStore.search(newQuery)
       router.replace({ query: { q: newQuery } })
     } else {
       mediaStore.clearSearch()
-      mediaStore.loadTrending() // Reload trending when search is empty
+      mediaStore.loadTrending()
       router.replace({ query: {} })
     }
   }, 400)
@@ -46,12 +86,20 @@ watch(searchQuery, (newQuery) => {
 const clearSearch = () => {
   searchQuery.value = ''
   mediaStore.clearSearch()
-  mediaStore.loadTrending() // Reload trending when clearing search
+  mediaStore.loadTrending()
   router.replace({ query: {} })
 }
 
-const viewMovieDetails = (id: number, mediaType: 'movie' | 'tv') => {
-  router.push({ name: 'movie-details', params: { id: id.toString() }, query: { type: mediaType } })
+const viewMovieDetails = (movie: { id: number; title: string; poster_path: string | null; media_type: 'movie' | 'tv'; vote_average?: number; release_date?: string }) => {
+  saveToViewedHistory({
+    id: movie.id,
+    title: movie.title,
+    poster_path: movie.poster_path,
+    media_type: movie.media_type,
+    vote_average: movie.vote_average,
+    release_date: movie.release_date
+  })
+  router.push({ name: 'movie-details', params: { id: movie.id.toString() }, query: { type: movie.media_type } })
 }
 
 const loadMore = () => {
@@ -96,7 +144,98 @@ const loadMore = () => {
         <Loader2 class="w-8 h-8 text-[#03b5aa] animate-spin" />
       </div>
 
-      <!-- Results Header -->
+      <!-- Recently Viewed (shown when no search is active) -->
+      <div v-else-if="showHistory" class="mb-10">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg text-[#ecebe8] font-medium flex items-center gap-2">
+            <Clock class="w-5 h-5 text-[#ecebe8]/40" />
+            Vus récemment
+          </h2>
+          <button @click="clearViewedHistory" class="text-[#ecebe8]/30 hover:text-[#ecebe8]/60 text-sm transition-colors">
+            Tout effacer
+          </button>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div
+            v-for="item in viewedHistory"
+            :key="`${item.media_type}-${item.id}`"
+            @click="viewMovieDetails(item)"
+            class="relative group cursor-pointer"
+          >
+            <div class="aspect-[2/3] rounded-xl overflow-hidden bg-[#071429]/60 border border-[#ecebe8]/10">
+              <img
+                v-if="item.poster_path"
+                :src="getImageUrl(item.poster_path, 'w342')"
+                :alt="item.title"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+              />
+              <div v-else class="w-full h-full flex items-center justify-center">
+                <Film class="w-8 h-8 text-[#ecebe8]/20" />
+              </div>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <!-- Media Type Badge -->
+              <div class="absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium bg-[#03b5aa] text-[#ecebe8]">
+                {{ item.media_type === 'movie' ? 'Film' : 'Série' }}
+              </div>
+
+              <!-- Remove from history -->
+              <button
+                @click.stop="removeFromViewedHistory(item.id, item.media_type)"
+                class="absolute top-2 right-2 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/90"
+              >
+                <X class="w-3 h-3 text-white" />
+              </button>
+
+              <!-- Info on hover -->
+              <div class="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <p class="text-[#ecebe8] font-medium text-sm mb-1 line-clamp-2">{{ item.title }}</p>
+                <div v-if="item.vote_average" class="flex items-center gap-1 text-xs text-[#ecebe8]/70">
+                  <span>⭐ {{ item.vote_average.toFixed(1) }}</span>
+                  <span v-if="item.release_date">• {{ item.release_date.split('-')[0] }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trending after history -->
+        <div v-if="(mediaStore.trendingMedia || []).length > 0" class="mt-10">
+          <h2 class="text-xl text-[#ecebe8] mb-4 font-medium flex items-center gap-2">
+            🔥 Tendances
+          </h2>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div
+              v-for="movie in mediaStore.trendingMedia"
+              :key="`trending-${movie.media_type}-${movie.id}`"
+              @click="viewMovieDetails(movie)"
+              class="relative group cursor-pointer"
+            >
+              <div class="aspect-[2/3] rounded-xl overflow-hidden bg-[#071429]/60 border border-[#ecebe8]/10">
+                <img 
+                  :src="getImageUrl(movie.poster_path, 'w342')"
+                  :alt="movie.title"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div class="absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-medium bg-[#03b5aa] text-[#ecebe8]">
+                  {{ movie.media_type === 'movie' ? 'Film' : 'Série' }}
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p class="text-[#ecebe8] font-medium text-sm mb-1 line-clamp-2">{{ movie.title }}</p>
+                  <div class="flex items-center gap-2 text-xs text-[#ecebe8]/70">
+                    <span>⭐ {{ movie.vote_average.toFixed(1) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Results -->
       <template v-else-if="searchQuery.trim() ? (mediaStore.searchResults || []).length > 0 : (mediaStore.trendingMedia || []).length > 0">
         <div class="flex items-center justify-between mb-6">
           <p class="text-[#ecebe8] opacity-60">
@@ -113,7 +252,7 @@ const loadMore = () => {
           <div 
             v-for="movie in (searchQuery.trim() ? mediaStore.searchResults : mediaStore.trendingMedia)" 
             :key="`${movie.media_type}-${movie.id}`"
-            @click="viewMovieDetails(movie.id, movie.media_type)"
+            @click="viewMovieDetails(movie)"
             class="relative group cursor-pointer"
           >
             <div class="aspect-[2/3] rounded-xl overflow-hidden bg-[#071429]/60 border border-[#ecebe8]/10">
@@ -162,7 +301,7 @@ const loadMore = () => {
         <p class="text-[#ecebe8] opacity-40 text-sm mt-2">Essayez avec d'autres mots-clés</p>
       </div>
 
-      <!-- Trending Section (when no search) -->
+      <!-- Trending Section (when no search and no history) -->
       <template v-else-if="(mediaStore.trendingMedia || []).length > 0">
         <div class="mb-6">
           <h2 
@@ -178,7 +317,7 @@ const loadMore = () => {
           <div 
             v-for="movie in mediaStore.trendingMedia" 
             :key="`trending-${movie.media_type}-${movie.id}`"
-            @click="viewMovieDetails(movie.id, movie.media_type)"
+            @click="viewMovieDetails(movie)"
             class="relative group cursor-pointer"
           >
             <div class="aspect-[2/3] rounded-xl overflow-hidden bg-[#071429]/60 border border-[#ecebe8]/10">

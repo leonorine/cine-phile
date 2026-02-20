@@ -51,7 +51,7 @@ const stats = computed(() => {
   }
   return {
     collection_count: profileData.value?.collection_count || 0,
-    comment_count: profileData.value?.comment_count || 0,
+    comment_count: userComments.value.length,
     followers_count: followers.value.length,
     following_count: following.value.length
   }
