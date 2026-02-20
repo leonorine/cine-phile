@@ -122,15 +122,15 @@ const loadUserComments = async () => {
   try {
     const userId = route.params.id as string | undefined
     
-    // If viewing another user's profile, fetch their comments only
+    // If viewing another user's profile, fetch their comments + rated collection items
     if (userId && userId !== authStore.currentUser?.id) {
       const comments = await getUserCommentsByUserId(userId)
-      // For other users, we only show their comments without merging with collection
-      userComments.value = comments.map(comment => ({
+      // Backend already returns merged data (comments + collection ratings)
+      userComments.value = comments.map((comment: any) => ({
         ...comment,
-        media_title: undefined,
-        media_poster: undefined,
-        rating: undefined
+        media_title: comment.media_title || undefined,
+        media_poster: comment.media_poster || undefined,
+        rating: comment.rating ?? undefined
       }))
       return
     }
@@ -539,29 +539,37 @@ const renderStars = (rating: number) => {
             class="flex gap-4 p-4 bg-[#071429]/40 border border-[#ecebe8]/5 rounded-xl hover:border-[#ecebe8]/10 transition-colors cursor-pointer"
           >
             <!-- Movie Poster -->
-            <div class="w-16 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-[#071429]/60">
+            <div class="w-16 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-[#071429]/60 flex items-center justify-center">
               <img 
                 v-if="review.media_poster"
                 :src="getImageUrl(review.media_poster, 'w154')"
                 :alt="review.media_title"
                 class="w-full h-full object-cover"
               />
+              <Film v-else class="w-8 h-8 text-[#ecebe8]/20" />
             </div>
 
             <!-- Content -->
             <div class="flex-1 min-w-0">
-              <h3 class="text-[#ecebe8] font-bold mb-1 truncate">{{ review.media_title }}</h3>
+              <h3 class="text-[#ecebe8] font-bold mb-1 truncate">
+                {{ review.media_title || (review.media_type === 'film' ? 'Film' : 'Série') }}
+              </h3>
               
               <!-- Rating stars -->
               <div class="flex items-center gap-1 mb-2">
-                <Star 
-                  v-for="star in 5"
-                  :key="star"
-                  class="w-4 h-4"
-                  :class="star <= renderStars((review as any).rating || 0) ? 'text-[#f8d071]' : 'text-[#ecebe8]/20'"
-                  :fill="star <= renderStars((review as any).rating || 0) ? '#f8d071' : 'none'"
-                />
-                <span class="text-[#ecebe8]/50 text-xs ml-1">{{ renderStars((review as any).rating || 0) }}/5</span>
+                <template v-if="(review as any).rating">
+                  <Star 
+                    v-for="star in 5"
+                    :key="star"
+                    class="w-4 h-4"
+                    :class="star <= renderStars((review as any).rating) ? 'text-[#f8d071]' : 'text-[#ecebe8]/20'"
+                    :fill="star <= renderStars((review as any).rating) ? '#f8d071' : 'none'"
+                  />
+                  <span class="text-[#ecebe8]/50 text-xs ml-1">{{ renderStars((review as any).rating) }}/5</span>
+                </template>
+                <template v-else>
+                  <Star v-for="star in 5" :key="star" class="w-4 h-4 text-[#ecebe8]/15" fill="none" />
+                </template>
               </div>
 
               <!-- Comment text or rating info -->

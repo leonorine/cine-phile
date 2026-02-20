@@ -689,7 +689,7 @@ router.get('/user/me', authMiddleware, async (req: Request, res: Response) => {
 
 // ============================================
 // GET /api/comments/user/:user_id
-// Get comments by specific user ID
+// Get comments + rated collection items by specific user ID
 // ============================================
 router.get('/user/:user_id', async (req: Request, res: Response) => {
     try {
@@ -702,6 +702,7 @@ router.get('/user/:user_id', async (req: Request, res: Response) => {
             });
         }
 
+        // Fetch user's text comments
         const { data: comments, error: commentsError } = await db
             .from('comments')
             .select(`
@@ -725,9 +726,68 @@ router.get('/user/:user_id', async (req: Request, res: Response) => {
             });
         }
 
+        // Fetch user's rated collection items (to show items rated but without a comment)
+        const { data: collectionItems, error: collectionError } = await db
+            .from('collection')
+            .select('media_id, media_type, title, poster_url, rating, added_at, updated_at')
+            .eq('user_id', user_id)
+            .not('rating', 'is', null)
+            .gt('rating', 0)
+            .order('updated_at', { ascending: false });
+
+        if (collectionError) {
+            console.error('Error fetching user collection:', collectionError);
+        }
+
+        // Build a map of mediaId -> comment for quick lookup
+        const commentsMap = new Map(
+            (comments || []).map((c: any) => [String(c.media_id), c])
+        );
+
+        // Build result: one entry per rated collection item, merged with comment if exists
+        const result = (collectionItems || []).map((item: any) => {
+            const comment = commentsMap.get(String(item.media_id));
+            // Remove from map so we can find orphan comments later
+            commentsMap.delete(String(item.media_id));
+
+            return {
+                id: comment?.id || `collection-${item.media_id}`,
+                user_id,
+                media_id: String(item.media_id),
+                media_type: item.media_type,
+                text: comment?.text || '',
+                image_urls: comment?.image_urls || [],
+                created_at: comment?.created_at || item.added_at,
+                updated_at: comment?.updated_at || item.updated_at,
+                rating: item.rating,
+                media_title: item.title,
+                media_poster: item.poster_url,
+            };
+        });
+
+        // Add remaining comments that don't have a corresponding rated collection item
+        for (const [, comment] of commentsMap) {
+            result.push({
+                id: comment.id,
+                user_id,
+                media_id: String(comment.media_id),
+                media_type: comment.media_type,
+                text: comment.text,
+                image_urls: comment.image_urls,
+                created_at: comment.created_at,
+                updated_at: comment.updated_at,
+                rating: null,
+                media_title: null,
+                media_poster: null,
+            });
+        }
+
+        // Sort by most recent
+        result.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
         res.status(200).json({
             success: true,
-            data: comments || [],
+            data: result,
         });
     } catch (error) {
         console.error('Unexpected error in get user comments:', error);
