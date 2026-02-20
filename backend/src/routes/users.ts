@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { db } from '../config/supabase';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, optionalAuthMiddleware } from '../middleware/auth';
 
 const router = Router();
 
@@ -178,6 +178,40 @@ router.get('/:user_id', async (req: Request, res: Response) => {
             error: {
                 message: 'Erreur serveur inattendue',
             },
+        });
+    }
+});
+
+// ============================================
+// GET /api/users/:id/collection
+// ============================================
+router.get('/:id/collection', optionalAuthMiddleware, async (req: Request, res: Response) => {
+    try {
+        const { id: user_id } = req.params;
+
+        const { data: items, error } = await db
+            .from('collection_items')
+            .select('id, media_id, media_type, title, poster_url, rating, status')
+            .eq('user_id', user_id)
+            .order('added_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching user collection:', error);
+            return res.status(500).json({
+                success: false,
+                error: { message: 'Erreur lors de la récupération de la collection' },
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: items || [],
+        });
+    } catch (error) {
+        console.error('Unexpected error in get user collection:', error);
+        res.status(500).json({
+            success: false,
+            error: { message: 'Erreur serveur inattendue' },
         });
     }
 });

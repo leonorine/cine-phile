@@ -7,6 +7,7 @@ import { updateProfile, uploadAvatar } from '@/services/profile.service'
 import { getUserComments, getUserCommentsByUserId, type UserComment } from '@/services/comments.service'
 import { getImageUrl } from '@/services/media.service'
 import { getUserById, type UserProfile } from '@/services/users.service'
+import api from '@/services/api'
 import { getUserFollowers, getUserFollowing, followUser, unfollowUser, type FollowUser } from '@/services/follows.service'
 
 const router = useRouter()
@@ -81,6 +82,35 @@ const isLoadingFollowers = ref(false)
 const showFollowModal = ref(false)
 const modalType = ref<'followers' | 'following'>('followers')
 const modalUsers = computed(() => modalType.value === 'followers' ? followers.value : following.value)
+
+// Collection modal state
+const showCollectionModal = ref(false)
+const collectionModalItems = ref<any[]>([])
+const isLoadingCollectionModal = ref(false)
+
+const openCollectionModal = async () => {
+  showCollectionModal.value = true
+  isLoadingCollectionModal.value = true
+  try {
+    const userId = isOwnProfile.value ? authStore.currentUser?.id : (route.params.id as string)
+    if (!userId) return
+    if (isOwnProfile.value) {
+      // Normalize store items: poster_path → poster_url, 'movie'→'film', 'tv'→'serie'
+      collectionModalItems.value = authStore.collection.map((item: any) => ({
+        ...item,
+        poster_url: item.poster_path ?? item.poster_url,
+        media_type: item.media_type === 'movie' ? 'film' : item.media_type === 'tv' ? 'serie' : item.media_type,
+      }))
+    } else {
+      const response = await api.get<{ success: boolean; data: any[] }>(`/users/${userId}/collection`)
+      collectionModalItems.value = response.data.data
+    }
+  } catch (error) {
+    console.error('Error loading collection:', error)
+  } finally {
+    isLoadingCollectionModal.value = false
+  }
+}
 
 onMounted(async () => {
   await loadProfile()
@@ -461,7 +491,16 @@ const renderStars = (rating: number) => {
               </button>
             </div>
             <p class="text-[#ecebe8] opacity-50 text-sm mb-2">{{ user.email }}</p>
-            <p v-if="user.bio" class="text-[#ecebe8] opacity-70 text-sm mb-4 max-w-sm">{{ user.bio }}</p>
+            <div v-if="user.bio" class="flex items-center justify-center gap-2 mb-4">
+              <p class="text-[#ecebe8] opacity-70 text-sm max-w-sm text-center">{{ user.bio }}</p>
+              <button
+                v-if="isOwnProfile"
+                @click="startEditing"
+                class="p-1 text-[#ecebe8] opacity-40 hover:opacity-100 transition-opacity flex-shrink-0"
+              >
+                <Edit2 class="w-4 h-4" />
+              </button>
+            </div>
             <button
               v-else-if="isOwnProfile"
               @click="startEditing"
@@ -478,11 +517,14 @@ const renderStars = (rating: number) => {
 
       <!-- Stats -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div class="bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl p-6 text-center">
+        <div 
+          @click="openCollectionModal"
+          class="bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl p-6 text-center cursor-pointer hover:border-[#03b5aa]/30 transition-all"
+        >
           <div class="text-2xl text-[#ecebe8] font-bold">{{ stats.collection_count }}</div>
           <div class="text-[#ecebe8] opacity-50 text-sm flex items-center justify-center gap-1 mt-1">
             <Film class="w-4 h-4" />
-            Films
+            Films/Séries
           </div>
         </div>
         <div class="bg-[#071429]/60 border border-[#ecebe8]/10 rounded-xl p-6 text-center">
@@ -690,6 +732,65 @@ const renderStars = (rating: number) => {
               >
                 Se désabonner
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Collection Modal -->
+    <div 
+      v-if="showCollectionModal"
+      class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+      @click="showCollectionModal = false"
+    >
+      <div 
+        class="bg-[#0a1929] border border-[#ecebe8]/10 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+        @click.stop
+      >
+        <!-- Modal Header -->
+        <div class="p-6 border-b border-[#ecebe8]/10 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <Film class="w-5 h-5 text-[#03b5aa]" />
+            <h3 class="text-lg text-[#ecebe8] font-semibold">
+              {{ isOwnProfile ? 'Ma collection' : `Collection de ${user?.username}` }}
+            </h3>
+            <span class="text-[#ecebe8]/40 text-sm">({{ collectionModalItems.length }})</span>
+          </div>
+          <button @click="showCollectionModal = false" class="p-2 text-[#ecebe8] opacity-40 hover:opacity-100 transition-opacity">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="overflow-y-auto p-6">
+          <div v-if="isLoadingCollectionModal" class="flex justify-center py-12">
+            <Loader2 class="w-6 h-6 text-[#03b5aa] animate-spin" />
+          </div>
+          <div v-else-if="collectionModalItems.length === 0" class="text-center py-12 text-[#ecebe8]/40">
+            Aucun film ou série dans la collection
+          </div>
+          <div v-else class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+            <div 
+              v-for="item in collectionModalItems" 
+              :key="item.id"
+              @click="viewMediaDetails(item.media_id, item.media_type); showCollectionModal = false"
+              class="relative group cursor-pointer"
+            >
+              <div class="aspect-[2/3] rounded-lg overflow-hidden bg-[#071429]/60 border border-[#ecebe8]/10">
+                <img
+                  v-if="item.poster_url"
+                  :src="getImageUrl(item.poster_url, 'w342')"
+                  :alt="item.title"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center">
+                  <Film class="w-6 h-6 text-[#ecebe8]/20" />
+                </div>
+              </div>
+              <div class="mt-1.5">
+                <p class="text-[#ecebe8] text-xs truncate">{{ item.title }}</p>
+                <span class="text-[#ecebe8]/30 text-xs">{{ (item.media_type === 'serie' || item.media_type === 'tv') ? 'Série' : 'Film' }}</span>
+              </div>
             </div>
           </div>
         </div>
