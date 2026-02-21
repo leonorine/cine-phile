@@ -376,11 +376,6 @@ const handleAvatarChange = async (event: Event) => {
     }
   }
 }
-
-// Render stars
-const renderStars = (rating: number) => {
-  return rating // Already stored as /5 float
-}
 </script>
 
 <template>
@@ -600,19 +595,36 @@ const renderStars = (rating: number) => {
               <!-- Rating stars -->
               <div class="flex items-center gap-1 mb-2">
                 <template v-if="(review as any).rating">
-                  <Star 
+                  <svg
                     v-for="star in 5"
                     :key="star"
+                    viewBox="0 0 24 24"
                     class="w-4 h-4"
-                    :class="star <= renderStars((review as any).rating) ? 'text-[#f8d071]' : 'text-[#ecebe8]/20'"
-                    :fill="star <= renderStars((review as any).rating) ? '#f8d071' : 'none'"
-                  />
-                  <span class="text-[#ecebe8]/50 text-xs ml-1">{{ renderStars((review as any).rating) }}/5</span>
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <defs>
+                      <linearGradient :id="`prof-star-${(review as any).id ?? star}-${star}`" x1="0" x2="1" y1="0" y2="0">
+                        <!-- Left half -->
+                        <stop offset="50%" :stop-color="(review as any).rating >= star - 0.5 ? '#f8d071' : '#ecebe820'" />
+                        <!-- Right half -->
+                        <stop offset="50%" :stop-color="(review as any).rating >= star ? '#f8d071' : '#ecebe820'" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                      :fill="`url(#prof-star-${(review as any).id ?? star}-${star})`"
+                      stroke="#f8d071"
+                      :stroke-opacity="(review as any).rating >= star - 0.5 ? 0.7 : 0.15"
+                      stroke-width="1"
+                    />
+                  </svg>
+                  <span class="text-[#ecebe8]/50 text-xs ml-1">{{ (review as any).rating }}/5</span>
                 </template>
                 <template v-else>
                   <Star v-for="star in 5" :key="star" class="w-4 h-4 text-[#ecebe8]/15" fill="none" />
                 </template>
               </div>
+
 
               <!-- Comment text or rating info -->
               <p v-if="review.text && review.text.trim()" class="text-[#ecebe8]/70 text-sm line-clamp-2">{{ review.text }}</p>
