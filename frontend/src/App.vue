@@ -23,7 +23,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#071429]">
+  <div class="min-h-screen bg-[#071429] overflow-x-hidden w-full">
     <!-- Header - Desktop & Mobile (but different on mobile via bottom nav) -->
     <Header 
       v-if="authStore.isAuthenticated && shouldShowHeader()" 

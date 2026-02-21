@@ -386,7 +386,7 @@ const formatDate = (dateStr: string) => {
               <!-- Cast & Crew -->
               <div v-if="media.cast?.length" class="mb-8">
                 <h3 class="text-lg text-[#ecebe8] font-medium mb-4">Casting principal</h3>
-                <div class="flex gap-4 overflow-x-auto pb-4">
+                <div class="flex flex-wrap gap-6 pb-4">
                   <div 
                     v-for="person in media.cast.slice(0, 10)" 
                     :key="person.id"
@@ -403,8 +403,8 @@ const formatDate = (dateStr: string) => {
                         👤
                       </div>
                     </div>
-                    <p class="text-[#ecebe8] text-sm font-medium truncate w-20">{{ person.name }}</p>
-                    <p class="text-[#ecebe8]/50 text-xs truncate w-20">{{ person.character }}</p>
+                    <p class="text-[#ecebe8] text-sm font-medium w-20 text-center break-words leading-tight">{{ person.name }}</p>
+                    <p class="text-[#ecebe8]/50 text-xs w-20 text-center break-words leading-tight">{{ person.character }}</p>
                   </div>
                 </div>
               </div>

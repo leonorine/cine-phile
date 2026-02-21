@@ -1,8 +1,11 @@
 /* Custom styles for enhanced elegance */
 
 /* Smooth scrolling */
-html {
+html,
+body {
     scroll-behavior: smooth;
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 /* Custom scrollbar styling */
