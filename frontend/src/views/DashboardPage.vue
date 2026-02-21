@@ -128,7 +128,7 @@ const viewMovieDetails = (id: number, mediaType: 'movie' | 'tv') => {
                 <p class="text-[#ecebe8] text-sm font-medium truncate">{{ movie.title }}</p>
                 <div class="flex items-center gap-1 mt-1">
                   <Star class="w-3 h-3 text-[#f8d071]" fill="#f8d071" />
-                  <span class="text-[#ecebe8] text-xs">{{ movie.vote_average.toFixed(1) }}</span>
+                  <span class="text-[#ecebe8] text-xs">{{ (movie.vote_average / 2).toFixed(1) }}</span>
                 </div>
               </div>
             </div>
@@ -184,7 +184,7 @@ const viewMovieDetails = (id: number, mediaType: 'movie' | 'tv') => {
                 <p class="text-[#ecebe8] text-sm font-medium truncate">{{ movie.title || movie.name }}</p>
                 <div class="flex items-center gap-1 mt-1">
                   <Star class="w-3 h-3 text-[#f8d071]" fill="#f8d071" />
-                  <span class="text-[#ecebe8] text-xs">{{ movie.vote_average?.toFixed(1) }}</span>
+                  <span class="text-[#ecebe8] text-xs">{{ movie.vote_average ? (movie.vote_average / 2).toFixed(1) : '' }}</span>
                 </div>
               </div>
             </div>

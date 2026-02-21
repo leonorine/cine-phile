@@ -192,7 +192,7 @@ const loadMore = () => {
               <div class="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
                 <p class="text-[#ecebe8] font-medium text-sm mb-1 line-clamp-2">{{ item.title }}</p>
                 <div v-if="item.vote_average" class="flex items-center gap-1 text-xs text-[#ecebe8]/70">
-                  <span>⭐ {{ item.vote_average.toFixed(1) }}</span>
+                  <span>⭐ {{ (item.vote_average / 2).toFixed(1) }}</span>
                   <span v-if="item.release_date">• {{ item.release_date.split('-')[0] }}</span>
                 </div>
               </div>
@@ -226,7 +226,7 @@ const loadMore = () => {
                 <div class="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   <p class="text-[#ecebe8] font-medium text-sm mb-1 line-clamp-2">{{ movie.title }}</p>
                   <div class="flex items-center gap-2 text-xs text-[#ecebe8]/70">
-                    <span>⭐ {{ movie.vote_average.toFixed(1) }}</span>
+                    <span>⭐ {{ (movie.vote_average / 2).toFixed(1) }}</span>
                   </div>
                 </div>
               </div>
@@ -272,7 +272,7 @@ const loadMore = () => {
               <div class="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                 <p class="text-[#ecebe8] font-medium text-sm mb-1 line-clamp-2">{{ movie.title }}</p>
                 <div class="flex items-center gap-2 text-xs text-[#ecebe8]/70">
-                  <span>⭐ {{ movie.vote_average.toFixed(1) }}</span>
+                  <span>⭐ {{ (movie.vote_average / 2).toFixed(1) }}</span>
                   <span v-if="movie.release_date">• {{ movie.release_date.split('-')[0] }}</span>
                 </div>
               </div>
@@ -336,7 +336,7 @@ const loadMore = () => {
               <div class="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                 <p class="text-[#ecebe8] font-medium text-sm mb-1 line-clamp-2">{{ movie.title }}</p>
                 <div class="flex items-center gap-2 text-xs text-[#ecebe8]/70">
-                  <span>⭐ {{ movie.vote_average.toFixed(1) }}</span>
+                  <span>⭐ {{ (movie.vote_average / 2).toFixed(1) }}</span>
                 </div>
               </div>
             </div>

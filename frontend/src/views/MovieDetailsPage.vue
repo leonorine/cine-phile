@@ -277,7 +277,7 @@ const formatDate = (dateStr: string) => {
               <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-6 text-[#ecebe8]/70">
                 <div class="flex items-center gap-1.5">
                   <Star class="w-4 h-4 text-[#f8d071]" fill="#f8d071" />
-                  <span class="font-medium text-[#ecebe8]">{{ media.vote_average.toFixed(1) }}</span>
+                  <span class="font-medium text-[#ecebe8]">{{ (media.vote_average / 2).toFixed(1) }}</span>
                   <span class="text-sm opacity-60">({{ media.vote_count }} votes)</span>
                 </div>
                 
