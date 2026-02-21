@@ -366,7 +366,7 @@ const formatDate = (dateStr: string) => {
                     @mouseleave="handleStarLeave"
                     @click="setRating(hoverRating || star)"
                     :disabled="isUpdatingRating"
-                    class="p-1 transition-transform hover:scale-110 disabled:opacity-50 relative"
+                    class="p-1 disabled:opacity-50 relative"
                     style="width: 2.2rem; height: 2.2rem"
                   >
                     <svg viewBox="0 0 24 24" class="w-8 h-8" xmlns="http://www.w3.org/2000/svg">
