@@ -18,11 +18,11 @@ const createCollectionItemSchema = z.object({
     title: z.string().min(1, 'Le titre est requis'),
     poster_url: z.string().url('URL du poster invalide').optional().nullable(),
     status: z.enum(['to_watch', 'watched']).default('to_watch'),
-    rating: z.number().min(1, 'La note doit être entre 1 et 10').max(10, 'La note doit être entre 1 et 10').optional().nullable(),
+    rating: z.number().min(0.5, 'La note minimale est 0.5').max(5, 'La note maximale est 5').multipleOf(0.5, 'La note doit être un multiple de 0.5').optional().nullable(),
 });
 
 const updateCollectionItemSchema = z.object({
-    rating: z.number().min(1, 'La note doit être entre 1 et 10').max(10, 'La note doit être entre 1 et 10').optional().nullable(),
+    rating: z.number().min(0.5, 'La note minimale est 0.5').max(5, 'La note maximale est 5').multipleOf(0.5, 'La note doit être un multiple de 0.5').optional().nullable(),
     status: z.enum(['to_watch', 'watched']).optional(),
 });
 

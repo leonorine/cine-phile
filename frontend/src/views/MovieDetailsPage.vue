@@ -18,7 +18,7 @@ const addedToCollection = ref(false)
 
 // Rating state
 const userRating = ref(0)
-const hoverRating = ref(0)
+const hoverRating = ref(0)   // 0, 0.5, 1, 1.5, 2 ... 5
 const isUpdatingRating = ref(false)
 
 // Comments state
@@ -41,11 +41,8 @@ const error = computed(() => mediaStore.error)
 // Check if already in collection
 const collectionItem = computed(() => authStore.isInCollection(mediaId.value, mediaType.value))
 
-// Get current rating from collection item (convert 1-10 to 1-5)
-const currentRating = computed(() => {
-  const rating = collectionItem.value?.rating || 0
-  return Math.round(rating / 2)
-})
+// Get current rating from collection item (stored as 0.5-5 float)
+const currentRating = computed(() => collectionItem.value?.rating || 0)
 
 // Check if can comment (must have a rating)
 const canComment = computed(() => userRating.value > 0 || currentRating.value > 0)
@@ -122,24 +119,30 @@ const updateStatus = async (status: 'to_watch' | 'watched') => {
 
 const setRating = async (rating: number) => {
   if (!collectionItem.value || isUpdatingRating.value) return
-  
-  // Prevent duplicate API call if rating is already set to this value
-  if (userRating.value === rating) {
-    console.log('Rating already set to', rating, '- skipping API call')
-    return
-  }
-  
+  if (userRating.value === rating) return
+
   isUpdatingRating.value = true
   try {
-    // Convert 1-5 to 1-10 for storage
-    const ratingFor10 = rating * 2
-    await authStore.updateCollectionItem(collectionItem.value.id, { rating: ratingFor10 })
+    // Store 0.5-5 directly (DB is now float4)
+    await authStore.updateCollectionItem(collectionItem.value.id, { rating })
     userRating.value = rating
   } catch (error) {
     console.error('Failed to update rating:', error)
   } finally {
     isUpdatingRating.value = false
   }
+}
+
+// Detect half-star from mouse position within a star element
+const handleStarMove = (event: MouseEvent, starIndex: number) => {
+  const el = event.currentTarget as HTMLElement
+  const rect = el.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  hoverRating.value = x < rect.width / 2 ? starIndex - 0.5 : starIndex
+}
+
+const handleStarLeave = () => {
+  hoverRating.value = 0
 }
 
 const postComment = async () => {
@@ -359,23 +362,35 @@ const formatDate = (dateStr: string) => {
                   <button
                     v-for="star in 5"
                     :key="star"
-                    @click="setRating(star)"
-                    @mouseenter="hoverRating = star"
-                    @mouseleave="hoverRating = 0"
+                    @mousemove="handleStarMove($event, star)"
+                    @mouseleave="handleStarLeave"
+                    @click="setRating(hoverRating || star)"
                     :disabled="isUpdatingRating"
-                    class="p-1 transition-transform hover:scale-110 disabled:opacity-50"
+                    class="p-1 transition-transform hover:scale-110 disabled:opacity-50 relative"
+                    style="width: 2.2rem; height: 2.2rem"
                   >
-                    <Star 
-                      class="w-8 h-8 transition-colors"
-                      :class="(hoverRating || userRating) >= star ? 'text-[#f8d071]' : 'text-[#ecebe8]/20'"
-                      :fill="(hoverRating || userRating) >= star ? '#f8d071' : 'none'"
-                    />
+                    <svg viewBox="0 0 24 24" class="w-8 h-8" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient :id="`star-grad-${star}`" x1="0" x2="1" y1="0" y2="0">
+                          <stop offset="50%" :stop-color="(hoverRating || userRating) >= star - 0.5 ? '#f8d071' : '#ecebe830'" />
+                          <stop offset="50%" :stop-color="(hoverRating || userRating) >= star ? '#f8d071' : '#ecebe830'" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                        :fill="`url(#star-grad-${star})`"
+                        stroke="#f8d071"
+                        :stroke-opacity="(hoverRating || userRating) >= star - 0.5 ? 0.8 : 0.2"
+                        stroke-width="1"
+                      />
+                    </svg>
                   </button>
                   <span v-if="userRating" class="ml-2 text-[#ecebe8]/60 text-sm">
                     {{ userRating }}/5
                   </span>
                 </div>
               </div>
+
 
               <!-- Overview -->
               <div class="mb-8">
