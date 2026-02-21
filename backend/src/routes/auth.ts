@@ -138,6 +138,7 @@ router.post('/register', async (req: Request, res: Response) => {
             .insert({
                 id: authData.user.id,
                 pseudo: pseudo,
+                username: pseudo,
                 avatar_url: null,
                 bio: null,
             });
