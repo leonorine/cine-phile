@@ -51,9 +51,9 @@ onMounted(async () => {
   await mediaStore.loadMediaDetails(mediaType.value, mediaId.value)
   await loadComments()
   
-  // Initialize user rating from collection (convert 1-10 to 1-5)
+  // Initialize user rating from collection (stored as 0.5-5 float)
   if (collectionItem.value?.rating) {
-    userRating.value = Math.round(collectionItem.value.rating / 2)
+    userRating.value = collectionItem.value.rating
   }
 })
 
@@ -66,8 +66,8 @@ watch([mediaId, mediaType], async () => {
 
 // Watch collection item rating
 watch(() => collectionItem.value?.rating, (newRating) => {
-  if (newRating) {
-    userRating.value = Math.round(newRating / 2)
+  if (newRating != null) {
+    userRating.value = newRating
   }
 })
 
@@ -143,6 +143,15 @@ const handleStarMove = (event: MouseEvent, starIndex: number) => {
 
 const handleStarLeave = () => {
   hoverRating.value = 0
+}
+
+// Called on click: use the current hoverRating value BEFORE mouseleave fires
+const handleStarClick = (event: MouseEvent, starIndex: number) => {
+  const el = event.currentTarget as HTMLElement
+  const rect = el.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const value = x < rect.width / 2 ? starIndex - 0.5 : starIndex
+  setRating(value)
 }
 
 const postComment = async () => {
@@ -364,7 +373,7 @@ const formatDate = (dateStr: string) => {
                     :key="star"
                     @mousemove="handleStarMove($event, star)"
                     @mouseleave="handleStarLeave"
-                    @click="setRating(hoverRating || star)"
+                    @click="handleStarClick($event, star)"
                     :disabled="isUpdatingRating"
                     class="p-1 disabled:opacity-50 relative"
                     style="width: 2.2rem; height: 2.2rem"

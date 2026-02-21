@@ -82,7 +82,7 @@ const navigateTo = (routeName: string) => {
 }
 
 const renderStars = (rating: number) => {
-  return Math.round(rating / 2) // Convert 1-10 to 1-5
+  return rating // Already stored as /5 float
 }
 
 const isDeleting = ref<string | null>(null)
@@ -229,7 +229,7 @@ const handleDelete = async (event: Event, itemId: string, itemTitle: string) => 
                   v-for="star in 5" 
                   :key="star"
                   class="w-3 h-3"
-                  :class="star <= renderStars(item.rating) ? 'text-[#f8d071]' : 'text-[#ecebe8]/30'"
+                  :class="star <= renderStars(item.rating) ? 'text-[#f8d071]' : (star - 0.5 <= renderStars(item.rating) ? 'text-[#f8d071]/60' : 'text-[#ecebe8]/30')"
                   :fill="star <= renderStars(item.rating) ? '#f8d071' : 'none'"
                 />
               </div>

@@ -379,7 +379,7 @@ const handleAvatarChange = async (event: Event) => {
 
 // Render stars
 const renderStars = (rating: number) => {
-  return Math.round(rating / 2) // Convert 1-10 to 1-5
+  return rating // Already stored as /5 float
 }
 </script>
 
